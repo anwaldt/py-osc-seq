@@ -23,6 +23,10 @@ import math
 
 
 
+from multiprocessing import Process
+
+
+
 class osc_handler(object):
       
     def __init__(self, ip=None, sendport=None, receiveport=None, outpath=None, 
@@ -55,12 +59,13 @@ class osc_handler(object):
         self.max_sourceID = 0;
         
         
+        
     def set_ip(self, ip):   
         self.ip =ip
         self.osc_client = udp_client.SimpleUDPClient(self.ip, self.sendport)
     def set_sendport(self, sendport):
         self.sendport =sendport
-        self.osc_client = udp_client.SimpleUDPClient(self.ip, self.sendport)
+        #self.osc_client = udp_client.SimpleUDPClient(self.ip, self.sendport)
     def set_receiveport(self, receiveport):
         self.receiveport =receiveport
     def set_outpath(self, outpath):
@@ -100,11 +105,13 @@ class osc_handler(object):
         f.write(str(y))
         f.write("\n")
         
-    def act_jack(self):
+    def act_jack_play(self):
         
          #jack client for playing
         self.jclientp = jack.Client('osc-player' + str(id(self)))  #new client necessary for every class member?
         self.jclientp.activate();
+
+    def act_jack_record(self):
         # jack client for recording
         self.jclientr = jack.Client('osc-recorder' + str(id(self)))  #new client necessary for every class member?
         self.jclientr.activate();
@@ -112,13 +119,22 @@ class osc_handler(object):
     def act_send(self):
         # osc-client for sending osc
         self.osc_client = udp_client.SimpleUDPClient(self.ip, self.sendport)
+        self.osc_client._sock.bind(('',0))
+        address, self.clientport = self.osc_client._sock.getsockname() #get UDP source port 
+        print("clientport is " + str(self.clientport)) 
+
     def act_dispatcher(self):
         # server for recording osc
         self.dispatcher = dispatcher.Dispatcher() 
         self.dispatcher.map("/gain/", self.volume_handler )
-        self.dispatcher.map("update/source/position", self.position_handler )
-        self.server = osc_server.ThreadingOSCUDPServer(
-        (self.ip, self.receiveport), dispatcher)
+        self.dispatcher.map("/source/position", self.position_handler )
+        #print(osc_server.ThreadingOSCUDPServer.allow_reuse_address)
+        osc_server.ThreadingOSCUDPServer.allow_reuse_address = True
+        #print(osc_server.ThreadingOSCUDPServer.allow_reuse_address)
+        self.server = osc_server.ThreadingOSCUDPServer((self.ip, self.clientport), self.dispatcher)
+        print(self.server.allow_reuse_address)
+        #self.server = osc_server.ThreadingOSCUDPServer(
+        #(self.ip, self.sendport), dispatcher)
         print("Serving on {}".format(self.server.server_address))
         
     def poll(self):
@@ -133,11 +149,24 @@ class osc_handler(object):
     def subscribe(self):
         msg = omb.OscMessageBuilder(address="/subscribe")
         msg.add_arg(True,"T")
-        msg.add_arg(self.ip)
-        msg.add_arg(self.receiveport)
+        #msg.add_arg(self.ip)
+        #msg.add_arg(str(self.receiveport))
+        #msg.add_arg(1) #message level
         msg=msg.build()
         self.osc_client.send(msg)
-        
+
+    def alive(self):
+        while 1:
+            self.osc_client.send_message("/alive",' ') 
+            time.sleep(0.5)
+            print("sent /alive")
+
+    def message_level(self, i):
+        msg = omb.OscMessageBuilder(address="/message_level")
+        msg.add_arg(int(i),"i")
+        msg=msg.build()
+        self.osc_client.send(msg) 
+   
     def create_sources(self, N, r):
         
         for i in range(0,N):
@@ -162,6 +191,8 @@ class osc_handler(object):
             self.osc_client.send(msg)
             
         self.max_sourceID = self.max_sourceID + N
+        print("executed create_sources with N=" + str(N) + " and r=" +str(r))
+
     def delete_source(self, i):
         msg = omb.OscMessageBuilder(address="/source/delete")
         msg.add_arg(i)
@@ -184,7 +215,7 @@ class osc_handler(object):
         x=[]
         y=[]
     
-        self.create_sources(N)
+        #self.create_sources(N,1.0)
    
         for i in oscFiles:
             
@@ -206,14 +237,14 @@ class osc_handler(object):
         
         
         while 1:
-            print(jackPos)
-            print(last_jackPos)  
+            #print(jackPos)
+            #print(last_jackPos)  
             jackPos = self.jclientp.transport_frame
             
             if jackPos != last_jackPos:
                 
                 for i in range(0,N):
-                    print(str(i) + "position")        
+                    #print(str(i) + "position")        
                     tmpIdx = np.argmin(np.abs(t[i] -jackPos))
                        
                     msg = omb.OscMessageBuilder(address="/source/position")
@@ -227,6 +258,24 @@ class osc_handler(object):
             time.sleep(0.020)   
 
     def receive_write(self):
-        self.server.serve_forever()  #doesn't work yet
+        self.server.serve_forever()  
+        print("serveforever")
         
-         
+    # before record(), do:
+    # osc1 = osc_handler()
+    # osc1.act_send()
+    # osc1.alive() to check for portnumber, then terminate this process    
+    # osc1.set_receiveport(RIGHTPORTNUMBER)
+    #def receive(self):
+     #   while True:
+      #      data, addr = self.osc_client._sock.recvfrom(1024)
+       #     print( "received message:" + data )
+   # def record(self):
+        
+        #self.subscribe()
+        #self.act_dispatcher()
+        #p1 = Process(target=self.alive())  
+        #p2 = Process(target=self.receive())
+        
+    #    p1.start()
+     #   p2.start()
