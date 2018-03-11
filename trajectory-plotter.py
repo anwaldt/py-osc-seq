@@ -50,6 +50,8 @@ def plot_apmlitudes(sourceID):
 
 def plot_position(sourceID,startIDX,stopIDX):
 
+    
+    
     posFile = 'positions' 
 
     #amplitudes = np.loadtxt(AmpFile, dtype='d', delimiter='\t')
@@ -71,16 +73,20 @@ def plot_position(sourceID,startIDX,stopIDX):
     ax1.set_ylabel('y' ,color = [ 0.3, 0.3, 0.3])
     
     #newAR = newAR[startIDX:stopIDX,:]    
-    # N = len(newAR)
+    N = len(newAR)
     
-#    for i in range(N-1):
-#    
-#        colIDX = i/N
-#        
-#        ax1.plot(newAR[i:i+2,2], newAR[i:i+2,3], linewidth=0.75, color= mpl.cm.jet(colIDX))
-#      
-#     
-    ax1.plot(newAR[startIDX:stopIDX,2], newAR[startIDX:stopIDX,3], linewidth=0.75)
+    if startIDX == -1:
+        startIDX = 0
+        
+    if stopIDX == -1:
+        stopIDX = N
+    
+    for i in range(N-1):
+        colIDX = i/N
+        
+        ax1.plot(newAR[i:i+2,2], newAR[i:i+2,3], linewidth=0.75, color= mpl.cm.jet(colIDX))
+        
+    #ax1.plot(newAR[startIDX:stopIDX,2], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
    # ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
@@ -93,5 +99,5 @@ def plot_position(sourceID,startIDX,stopIDX):
 ########################################################################################
 
 
-plot_position(5,10000,20000)
+plot_position(2,-1,-1)
 
