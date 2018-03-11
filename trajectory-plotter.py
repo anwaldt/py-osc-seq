@@ -52,7 +52,7 @@ def plot_position(sourceID,startIDX,stopIDX):
 
     
     
-    posFile = 'positions' 
+    posFile = 'pos-2' 
 
     #amplitudes = np.loadtxt(AmpFile, dtype='d', delimiter='\t')
     
@@ -61,10 +61,12 @@ def plot_position(sourceID,startIDX,stopIDX):
     positions  = np.loadtxt(posFile, delimiter='\t', usecols=(1,2,3,4))
     #paths      = np.genfromtxt(posFile ,usecols=(0) ,dtype='str')
     
-    
-    sourceIDS  = positions[:,1]
-    idxs       = np.where(sourceIDS == sourceID)
-    newAR      = positions[idxs[0],:]    
+#    
+#    sourceIDS  = positions[:,1]
+#    idxs       = np.where(sourceIDS == sourceID)
+#    newAR      = positions[idxs[0],:]    
+#    
+    newAR = positions;
     
     mpl.style.use('default')
     fig, ax1 = mpl.subplots()

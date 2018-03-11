@@ -38,7 +38,7 @@ def volume_handler(unused_addr, ch1, ch2, gain, timestamp):
 
 def position_handler(unused_addr, ID, x, y, timestamp):
    
-  f = open('positions', 'a')
+  f = open(args.outfile, 'a')
   f.write("position")
   f.write("\t")
   #f.write(str(timestamp))
@@ -60,16 +60,19 @@ if __name__ == "__main__":
     
      
   client = jack.Client('osc-recorder')
-  
   client.activate();
+  
   #client.inports.register('input_1')
   
   parser = argparse.ArgumentParser()        
+  parser.add_argument("--outfile",
+                      default ="positions",help="filename for ouput")
   parser.add_argument("--ip",
       default="127.0.0.1", help="The ip to listen on")
   parser.add_argument("--port",
       type=int, default=5005, help="The port to listen on")
   args = parser.parse_args()
+  
   
   dispatcher = dispatcher.Dispatcher()
   
