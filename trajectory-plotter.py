@@ -10,6 +10,7 @@ Created on Mon Nov 13 09:25:19 2017
 # Start Stuff
 ########################################################################################
 
+import argparse
 import numpy as np
 import matplotlib.pyplot as mpl
  
@@ -52,7 +53,7 @@ def plot_position(sourceID,startIDX,stopIDX):
 
     
     
-    posFile = 'pos-2' 
+    posFile = args.infile
 
     #amplitudes = np.loadtxt(AmpFile, dtype='d', delimiter='\t')
     
@@ -102,5 +103,12 @@ def plot_position(sourceID,startIDX,stopIDX):
 ########################################################################################
 
 
-plot_position(2,-1,-1)
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()        
+    parser.add_argument("--infile",
+                      default ="pos-1",help="filename for plot")
+    args = parser.parse_args()
+      
+    plot_position(2,-1,-1)
 

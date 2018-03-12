@@ -34,17 +34,28 @@ jack_client = jack.Client('osc-player')
 jack_client.activate();
   
 posFiles     = [
-        'pos-1', 
-        'pos-2', 
-        'pos-3', 
-        'pos-4',
-        'pos-5',
-        'pos-6',
-        'pos-7',
-        'pos-8']
+        'hermann-1', 
+        'hermann-2', 
+        'hermann-3', 
+        'hermann-4',
+        'hermann-5',
+        'hermann-6',
+        'hermann-7',
+        'hermann-8',
+        'hermann-9',
+        'hermann-10',
+        'hermann-11',
+        'hermann-12',
+        'hermann-13',
+        'hermann-14',
+        'hermann-15',
+        'hermann-16'
+        ]
 
 
-N = 8   
+N = len(posFiles)
+
+
 
 cnt=1
 
@@ -83,8 +94,8 @@ while 1:
                
             msg = omb.OscMessageBuilder(address="/source/position")
             msg.add_arg(ID[i][tmpIdx])  
-            msg.add_arg(x[i][tmpIdx]*5)
-            msg.add_arg(y[i][tmpIdx]*5)
+            msg.add_arg(x[i][tmpIdx]*15)
+            msg.add_arg(y[i][tmpIdx]*-15)
             msg=msg.build()
             osc_client.send(msg)
                 
