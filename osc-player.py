@@ -33,7 +33,18 @@ jack_client = jack.Client('osc-player')
   
 jack_client.activate();
   
-posFiles     = ['pos-1', 'pos-2']
+posFiles     = [
+        'pos-1', 
+        'pos-2', 
+        'pos-3', 
+        'pos-4',
+        'pos-5',
+        'pos-6',
+        'pos-7',
+        'pos-8']
+
+
+N = 8   
 
 cnt=1
 
@@ -53,6 +64,9 @@ for i in posFiles:
     x.append(positions[:,2])
     y.append(positions[:,3])
 
+
+print('All files read - ready for playback!')
+
 jackPos = jack_client.transport_frame
 
 last_jackPos= jackPos;
@@ -63,7 +77,7 @@ while 1:
         
     if jackPos != last_jackPos:
         
-        for i in range(0,2):
+        for i in range(0,N):
                     
             tmpIdx = np.argmin(np.abs(t[i] -jackPos))
                

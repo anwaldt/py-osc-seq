@@ -83,12 +83,13 @@ def plot_position(sourceID,startIDX,stopIDX):
     if stopIDX == -1:
         stopIDX = N
     
-    for i in range(N-1):
-        colIDX = i/N
+    # Does not work for long trajectories
+    #for i in range(N-1):
+    #    colIDX = i/N
         
-        ax1.plot(newAR[i:i+2,2], newAR[i:i+2,3], linewidth=0.75, color= mpl.cm.jet(colIDX))
+   #     ax1.plot(newAR[i:i+2,2], newAR[i:i+2,3], linewidth=0.75, color= mpl.cm.jet(colIDX))
         
-    #ax1.plot(newAR[startIDX:stopIDX,2], newAR[startIDX:stopIDX,3], linewidth=0.75)
+    ax1.plot(newAR[startIDX:stopIDX,2], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
    # ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
