@@ -14,9 +14,16 @@ fs_ctl = 50;
 
 fid = fopen(fileName,'w');
 
-x = filter(ones(1,2000)/2000,1,randn(N,1))*15;
 
-y = filter(ones(1,2000)/2000,1,randn(N,1))*15;
+x = sin(2*pi*(1:N)/(5*11.7*sourceID));
+
+%x = filter(ones(1,2000)/2000,1,randn(N,1))*15;
+
+y = sin(2*pi*(1:N)/(5*9.3*sourceID));
+
+%y = filter(ones(1,2000)/2000,1,randn(N,1))*15;
+
+
 
 for IDX = 1:N
     
