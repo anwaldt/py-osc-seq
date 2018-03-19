@@ -5,14 +5,12 @@ received packets.
 """
 import argparse
 import jack
-
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QWidget, QSlider, QLabel,
-                                                         QGridLayout, QVBoxLayout, QHBoxLayout,
-                                                         QApplication)
+import os
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
+
+
 
   ##############################################################################
   ##############################################################################
@@ -37,8 +35,14 @@ def volume_handler(unused_addr, ch1, ch2, gain, timestamp):
 #------------------------------------------------------------------------------
 
 def position_handler(unused_addr, ID, x, y, timestamp):
+
    
-  f = open(args.outfile, 'a')
+
+  tmpName = args.outpath + "pos" + str(ID);
+  
+  
+  
+  f = open(tmpName, 'a')
   f.write("position")
   f.write("\t")
   #f.write(str(timestamp))
@@ -65,18 +69,19 @@ if __name__ == "__main__":
   #client.inports.register('input_1')
   
   parser = argparse.ArgumentParser()        
-  parser.add_argument("--outfile",
-                      default ="positions",help="filename for ouput")
+  parser.add_argument("--outpath",
+                      default ="posis",help="filename for ouput")
   parser.add_argument("--ip",
       default="127.0.0.1", help="The ip to listen on")
   parser.add_argument("--port",
       type=int, default=5005, help="The port to listen on")
   args = parser.parse_args()
-  
-  
-  dispatcher = dispatcher.Dispatcher()
-  
 
+  if not os.path.exists(args.outpath):
+    os.makedirs(args.outpath)
+    
+  
+  dispatcher = dispatcher.Dispatcher()  
   
   dispatcher.map("/gain/", volume_handler )
   
@@ -85,7 +90,6 @@ if __name__ == "__main__":
   server = osc_server.ThreadingOSCUDPServer(
       (args.ip, args.port), dispatcher)
   print("Serving on {}".format(server.server_address))
-  
   
   
   positions = []
