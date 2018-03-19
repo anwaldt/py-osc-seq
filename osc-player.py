@@ -130,12 +130,12 @@ while 1:
             msg = omb.OscMessageBuilder(address="/source/position")
             msg.add_arg(ID[i][tmpIdx])  
             msg.add_arg(x[i][tmpIdx]*5)
-            msg.add_arg(y[i][tmpIdx]*-5)
+            msg.add_arg(y[i][tmpIdx]*-  5)
             msg=msg.build()
             osc_client.send(msg)
                 
         last_jackPos = jackPos;    
-    time.sleep(0.01)
+    time.sleep(0.005)
 
         
         
