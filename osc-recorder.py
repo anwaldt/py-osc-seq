@@ -38,11 +38,9 @@ def position_handler(unused_addr, ID, x, y, timestamp):
 
    
 
-  tmpName = args.outpath + "pos" + str(ID);
+  tmpName = args.outpath + "pos" + str(ID) + ".osc";
   
-  
-  
-  f = open(tmpName, 'a')
+  f       = open(tmpName, 'a')
   f.write("position")
   f.write("\t")
   #f.write(str(timestamp))
@@ -54,9 +52,7 @@ def position_handler(unused_addr, ID, x, y, timestamp):
   f.write("\t")
   f.write(str(y))
   f.write("\n")
-
     
-  
 ##############################################################################
 ##############################################################################
   
