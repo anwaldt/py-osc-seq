@@ -56,10 +56,7 @@ def osc_player(oscPath):
      
     
     N = len(oscFiles)
-    
-    
-    
-    cnt=1
+         
     
     t=[]
     ID = []
@@ -102,7 +99,7 @@ def osc_player(oscPath):
                 osc_client.send(msg)
                     
             last_jackPos = jackPos;    
-        time.sleep(0.005)
+        time.sleep(0.005)   
 
    
 

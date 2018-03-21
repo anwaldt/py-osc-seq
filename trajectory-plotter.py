@@ -49,40 +49,15 @@ def plot_apmlitudes(sourceID):
 # PLOT Amplitudes
 ########################################################################################
 
-def plot_position(sourceID,startIDX,stopIDX):
-
-    
-    
-    posFile = args.infile
-
-    #amplitudes = np.loadtxt(AmpFile, dtype='d', delimiter='\t')
-    
-    
-    
-    positions  = np.loadtxt(posFile, delimiter='\t', usecols=(1,2,3,4))
-    #paths      = np.genfromtxt(posFile ,usecols=(0) ,dtype='str')
-    
-#    
-#    sourceIDS  = positions[:,1]
-#    idxs       = np.where(sourceIDS == sourceID)
-#    newAR      = positions[idxs[0],:]    
-#    
-    newAR = positions;
-    
+def plot_position_xy(sourceID,startIDX,stopIDX):
+        
     mpl.style.use('default')
     fig, ax1 = mpl.subplots()
     
     ax1.set_xlabel('x')
     ax1.set_ylabel('y' ,color = [ 0.3, 0.3, 0.3])
     
-    #newAR = newAR[startIDX:stopIDX,:]    
-    N = len(newAR)
-    
-    if startIDX == -1:
-        startIDX = 0
-        
-    if stopIDX == -1:
-        stopIDX = N
+     
     
     # Does not work for long trajectories
     #for i in range(N-1):
@@ -94,10 +69,41 @@ def plot_position(sourceID,startIDX,stopIDX):
     
    # ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
-    fig.savefig("aa.pdf")
+    fig.savefig(args.infile + '_XY_' + '.pdf')
     
-    return 0;
+    return 0
    
+def plot_position_X(newAR, startIDX,stopIDX):
+         
+    mpl.style.use('default')
+    fig, ax1 = mpl.subplots()
+    
+    ax1.set_xlabel('t')
+    ax1.set_ylabel('x' ,color = [ 0.3, 0.3, 0.3])
+    
+    
+    ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,2], linewidth=0.75)
+    
+    fig.savefig(args.infile + '_X_' + '.pdf')
+
+    return 0
+
+
+   
+def plot_position_Y(newAR, startIDX,stopIDX):
+            
+    mpl.style.use('default')
+    fig, ax1 = mpl.subplots()
+    
+    ax1.set_xlabel('t')
+    ax1.set_ylabel('x' ,color = [ 0.3, 0.3, 0.3])
+    
+    
+    ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,3], linewidth=0.75)
+    
+    fig.savefig(args.infile  + '_Y_' + '.pdf')
+
+    return 0
 ########################################################################################
 # 
 ########################################################################################
@@ -108,7 +114,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()        
     parser.add_argument("--infile",
                       default ="pos-1",help="filename for plot")
+    
     args = parser.parse_args()
-      
-    plot_position(2,-1,-1)
 
+
+    posFile     = args.infile
+    
+    positions   = np.loadtxt(posFile, delimiter='\t', usecols=(1,2,3,4))
+
+    newAR       = positions;   
+    #newAR = newAR[startIDX:stopIDX,:]    
+
+    N = len(newAR)
+    
+    #plot_position_xy(2,-1,-1)
+
+    plot_position_X(newAR, -1,-1)
