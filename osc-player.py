@@ -66,13 +66,32 @@ def osc_player(oscPath):
     for i in oscFiles:
         
         print(["loading".__add__(i)])
-    
+        
         positions  = np.loadtxt(oscPath.__add__(i), delimiter='\t', usecols=(1,2,3,4))
+        
+        msg = omb.OscMessageBuilder(address="/source/new")
+        msg.add_arg("source"+ str(i) , "s")
+        msg.add_arg("point")
+        msg.add_arg("1", "s")
+        msg.add_arg(positions[1,2], "f")
+        msg.add_arg(positions[1,3], "f")
+        msg.add_arg(1.0, "f") #orientation
+        msg.add_arg(1.0, "f")
+        #msg.add_arg(1, "i")
+        #msg.add_arg("1", "s")
+        msg.add_arg(False,"F")
+        msg.add_arg(False,"F")
+        msg.add_arg(False,"F")
+        
+        msg=msg.build()
+        osc_client.send(msg)
     
         t.append(positions[:,0])
         ID.append(positions[:,1])
         x.append(positions[:,2])
         y.append(positions[:,3])
+        
+        
     
     
     print('All files read - ready for playback!')
@@ -81,14 +100,16 @@ def osc_player(oscPath):
     
     last_jackPos= jackPos;
     
+    
     while 1:
-           
+        print(jackPos)
+        print(last_jackPos)  
         jackPos = jack_client.transport_frame
-            
+        
         if jackPos != last_jackPos:
             
             for i in range(0,N):
-                        
+                print(str(i) + "position")        
                 tmpIdx = np.argmin(np.abs(t[i] -jackPos))
                    
                 msg = omb.OscMessageBuilder(address="/source/position")
@@ -99,20 +120,20 @@ def osc_player(oscPath):
                 osc_client.send(msg)
                     
             last_jackPos = jackPos;    
-        time.sleep(0.005)   
+        time.sleep(0.020)   
 
    
 
-########################################################################################
+#########################################################################################
+## 
+#########################################################################################
+#
 # 
-########################################################################################
-
- 
-
-
-########################################################################################
-# 
-########################################################################################
+#
+#
+#########################################################################################
+## 
+#########################################################################################
 
 
 
