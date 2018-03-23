@@ -19,6 +19,8 @@ import os
 from os import listdir
 from os.path import isfile, join
 
+import math
+
 
 
 class osc_handler(object):
@@ -121,7 +123,28 @@ class osc_handler(object):
     def poll(self):
         self.osc_client.send_message("/poll",' ') 
         
+    def create_sources(self, N, r):
         
+        for i in range(0,N):
+            
+            
+            msg = omb.OscMessageBuilder(address="/source/new")
+            msg.add_arg("source"+ str(i+1) , "s")
+            msg.add_arg("point")
+            msg.add_arg("1", "s")
+            #arrange sources in a circle
+            msg.add_arg(r*math.cos(i/N*3.14159*2+3.14159/2), "f")
+            msg.add_arg(r*math.sin(i/N*3.14159*2+3.14159/2), "f")
+            msg.add_arg(1.0, "f") #orientation
+            msg.add_arg(1.0, "f")
+            #msg.add_arg(1, "i")
+            #msg.add_arg("1", "s")
+            msg.add_arg(False,"F")
+            msg.add_arg(False,"F")
+            msg.add_arg(False,"F")
+            
+            msg=msg.build()
+            self.osc_client.send(msg)
         
     def read_send(self):
         
@@ -136,37 +159,20 @@ class osc_handler(object):
         x=[]
         y=[]
     
+        self.create_sources(N)
+   
         for i in oscFiles:
             
             print(["loading".__add__(i)])
             
             positions  = np.loadtxt(self.inpath.__add__(i), delimiter='\t', usecols=(1,2,3,4))
-            
-            msg = omb.OscMessageBuilder(address="/source/new")
-            msg.add_arg("source"+ str(i) , "s")
-            msg.add_arg("point")
-            msg.add_arg("1", "s")
-            msg.add_arg(positions[1,2], "f")
-            msg.add_arg(positions[1,3], "f")
-            msg.add_arg(1.0, "f") #orientation
-            msg.add_arg(1.0, "f")
-            #msg.add_arg(1, "i")
-            #msg.add_arg("1", "s")
-            msg.add_arg(False,"F")
-            msg.add_arg(False,"F")
-            msg.add_arg(False,"F")
-            
-            msg=msg.build()
-            self.osc_client.send(msg)
-        
+    
             t.append(positions[:,0])
             ID.append(positions[:,1])
             x.append(positions[:,2])
             y.append(positions[:,3])
             
             
-        
-        
         print('All files read - ready for playback!')
         
         jackPos = self.jclientp.transport_frame
