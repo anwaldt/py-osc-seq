@@ -290,8 +290,8 @@ class osc_handler(object):
         #self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         #self.sock.bind((self.ip, self.sourceport))
         while True:
-            data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
-            data1 = decodeOSC(data)
+            data1, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
+            #data1 = decodeOSC(data)
             print(data1)
 
     def socket_create_sources(self, N, r):
