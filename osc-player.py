@@ -70,7 +70,7 @@ def osc_player(oscPath):
         positions  = np.loadtxt(oscPath.__add__(i), delimiter='\t', usecols=(1,2,3,4))
         
         msg = omb.OscMessageBuilder(address="/source/new")
-        msg.add_arg("source"+ str(i) , "s")
+        msg.add_arg(str(i) , "s")
         msg.add_arg("point")
         msg.add_arg("1", "s")
         msg.add_arg(positions[1,2], "f")
@@ -102,14 +102,14 @@ def osc_player(oscPath):
     
     
     while 1:
-        print(jackPos)
-        print(last_jackPos)  
+        #print(jackPos)
+        #print(last_jackPos)  
         jackPos = jack_client.transport_frame
         
         if jackPos != last_jackPos:
             
             for i in range(0,N):
-                print(str(i) + "position")        
+                #print(str(i) + "position")        
                 tmpIdx = np.argmin(np.abs(t[i] -jackPos))
                    
                 msg = omb.OscMessageBuilder(address="/source/position")
