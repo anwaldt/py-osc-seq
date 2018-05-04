@@ -250,7 +250,7 @@ class osc_handler(object):
                     msg = omb.OscMessageBuilder(address="/source/position")
                     msg.add_arg(ID[i][tmpIdx])  
                     msg.add_arg(x[i][tmpIdx]*5)
-                    msg.add_arg(y[i][tmpIdx]*-  5)
+                    msg.add_arg(y[i][tmpIdx]*-5)
                     msg=msg.build()
                     self.osc_client.send(msg)
                         

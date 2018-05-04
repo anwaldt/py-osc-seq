@@ -1,11 +1,53 @@
 import sys
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QInputDialog,
-	QPushButton, QApplication, QLabel, QCheckBox)
+	QPushButton, QApplication, QLabel, QCheckBox, QAction, QMainWindow, QFileDialog)
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
+from classes import filehandler, parser
 
-class GUI(QWidget):
+class MainWindow(QMainWindow):
 
+	def __init__(self):
+		super().__init__()
+		self.initUI()
+
+	def initUI(self):
+
+		self.setGeometry(300, 300, 1000, 1200)
+		self.setWindowTitle('program')
+		self.cbg = checkboxgrid()
+		self.setCentralWidget(self.cbg)
+
+		## objects for filehandling and osc communication ##
+		
+		self.fh = filehandler()
+
+		## MENU ##
+
+		changeProject = QAction('&choose Project folder', self)
+		changeProject.triggered.connect(self.showDialog1)
+
+		loadFiles = QAction('&load files', self)
+		loadFiles.triggered.connect(self.fh.read_all)
+		
+		self.statusBar()
+			
+		menubar = self.menuBar()
+		fileMenu = menubar.addMenu('&File')
+		fileMenu.addAction(changeProject)
+		fileMenu.addAction(loadFiles)
+		
+		## -- ##	
+
+		self.show()
+
+	def showDialog1(self):
+		path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+		self.fh.set_path(path + "/")
+	
+	
+
+class checkboxgrid(QWidget):
 	def __init__(self):
 		super().__init__()
 		self.initUI()
@@ -13,9 +55,7 @@ class GUI(QWidget):
 	def initUI(self):
 		self.grid = QGridLayout()
 		self.setLayout(self.grid)
-		self.setGeometry(300, 300, 800, 800)
-		self.setWindowTitle('program')
-		
+
 		## TABLE WITH CHECKBOXES ##
 
 		textSOURCES = QLabel('SOURCES')		
@@ -48,7 +88,9 @@ class GUI(QWidget):
 			
 			rcb[i] = QCheckBox('')
 			self.grid.addWidget(rcb[i], i+1, 3)
-			rcb[i].stateChanged.connect(lambda checked, i=i: self.click_rcb(rcb[i], i))	
+			rcb[i].stateChanged.connect(lambda checked, i=i: self.click_rcb(rcb[i], i))
+		
+		## -- ##	
 
 		self.show()
 
@@ -71,7 +113,7 @@ class GUI(QWidget):
 if __name__ == '__main__':
 
 	app = QApplication(sys.argv)
-	gui = GUI()
+	gui = MainWindow()	
 	sys.exit(app.exec_())
 		
 		
