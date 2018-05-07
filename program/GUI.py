@@ -13,10 +13,9 @@ class MainWindow(QMainWindow):
 
 	def initUI(self):
 
-		self.setGeometry(300, 300, 1000, 1200)
+		self.setGeometry(300, 300, 800, 800)
 		self.setWindowTitle('program')
-		self.cbg = checkboxgrid()
-		self.setCentralWidget(self.cbg)
+		
 
 		## objects for filehandling and osc communication ##
 		
@@ -28,7 +27,7 @@ class MainWindow(QMainWindow):
 		changeProject.triggered.connect(self.showDialog1)
 
 		loadFiles = QAction('&load files', self)
-		loadFiles.triggered.connect(self.fh.read_all)
+		loadFiles.triggered.connect(self.read_and_generate_cbg)
 		
 		self.statusBar()
 			
@@ -45,19 +44,28 @@ class MainWindow(QMainWindow):
 		path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 		self.fh.set_path(path + "/")
 	
+	def read_and_generate_cbg(self):
+		self.fh.read_all()
+		self.cbg = checkboxgrid()
+		self.cbg.initUI(self.fh)
+		self.setCentralWidget(self.cbg)
+		
+		
+	
 	
 
 class checkboxgrid(QWidget):
 	def __init__(self):
 		super().__init__()
-		self.initUI()
 
-	def initUI(self):
+	def initUI(self, fh):
 		self.grid = QGridLayout()
 		self.setLayout(self.grid)
+		
+		self.parser = parser(fh)
 
 		## TABLE WITH CHECKBOXES ##
-
+		
 		textSOURCES = QLabel('SOURCES')		
 		textPLAY = QLabel('PLAY')
 		textREC = QLabel('REC')
@@ -66,49 +74,64 @@ class checkboxgrid(QWidget):
 		self.grid.addWidget(textPLAY, 0,2)
 		self.grid.addWidget(textREC, 0,3)
 
-		N = 5 # TO DO make N changeable
-		numbers = []
+		numbers = fh.ID #source ID list from filehandler
+		N = len(numbers)
+		
+		for i in range(0,N):
+			numbers[i] = str(numbers[i])
+		
 		pcb = [] #PLAY checkboxes
 		rcb = [] #REC checkboxes
+		binary_list = [0] * N 
+		#information about which sources to play and record
+		self.parser.sources_to_play=binary_list
+		self.parser.sources_to_record=binary_list
+
+		self.labelnames = []
 
 		for i in range (0,N):
-
-			numbers.append(str(i))
+			#generate names for sourcenumber label-widgets
+			self.labelnames.append(str(i))
+			#generate names for play and record checkbox-widgets
 			pcb.append(str(pcb) + str(i))
 			rcb.append(str(rcb) +str(i))
 
 		for i in range (0,N):
 
-			numbers[i] = QLabel(str(i+1))
-			self.grid.addWidget(numbers[i], i+1,1)
+			self.labelnames[i] = QLabel(numbers[i])
+			self.grid.addWidget(self.labelnames[i], i+1,1)
 
 			pcb[i] = QCheckBox('')
 			self.grid.addWidget(pcb[i], i+1, 2)
-			pcb[i].stateChanged.connect(lambda checked, i=i: self.click_pcb(pcb[i], i))
+			pcb[i].stateChanged.connect(lambda checked, i=i: self.click_pcb(pcb[i], numbers[i], i))
 			
 			rcb[i] = QCheckBox('')
 			self.grid.addWidget(rcb[i], i+1, 3)
-			rcb[i].stateChanged.connect(lambda checked, i=i: self.click_rcb(rcb[i], i))
+			rcb[i].stateChanged.connect(lambda checked, i=i: self.click_rcb(rcb[i], numbers[i], i))
 		
 		## -- ##	
 
 		self.show()
 
 	# actions that happen when checkboxes are clicked
-	def click_pcb(self, box_id,i):
+	def click_pcb(self, box_id,num_i,i):
 		if box_id.isChecked():
-			# TO DO: activate playing of source
-			print("playing of source " + str(i) + " got activated")
+			self.parser.sources_to_play[i]=1
+			print("playing of source " + str(num_i) + " got activated")
 		else:
-			# TO DO: deactivate playing of source
-			print("playing of source " + str(i) + " got deactivated")
-	def click_rcb(self, box_id,i):
+			self.parser.sources_to_play[i]=0
+			print("playing of source " + str(num_i) + " got deactivated")
+		print('play: ')
+		print (self.parser.sources_to_play)
+	def click_rcb(self, box_id,num_i,i):
 		if box_id.isChecked():
-			# TO DO: activate playing of source
-			print("recording of source " + str(i) + " got activated")
+			self.parser.sources_to_record[i]=1
+			print("recording of source " + str(num_i) + " got activated")
 		else:
-			# TO DO: deactivate playing of source
-			print("recording of source " + str(i) + " got deactivated")
+			self.parser.sources_to_record[i]=0
+			print("recording of source " + str(num_i) + " got deactivated")
+		print('record: ')
+		print (self.parser.sources_to_record)
 			
 if __name__ == '__main__':
 
