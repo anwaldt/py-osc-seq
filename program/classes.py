@@ -16,7 +16,8 @@ class filehandler(object):
 		else: 
 			self.path = path
 		
-		self.ID=[]
+		self.ID=[] # list of IDs
+		self.id =[] # id entry for every index
 		self.t=[]
 		self.x=[]
 		self.y=[]
@@ -33,33 +34,47 @@ class filehandler(object):
 		
 		N = len(oscFiles)
 
-		for i in oscFiles:
-			with open(self.path + i) as f:
-				first_line = f.readline()
-			self.ID.append(int(first_line))
+		for i in oscFiles:		
+			filecontent = np.loadtxt(self.path.__add__(i), delimiter='\t', usecols=(2,))
+
+			
+			self.ID.append(int(filecontent[0]))
+
 		#sort oscFiles list in the same way as source ID list
 		self.ID, oscfiles = (list(k) for k in zip(*sorted(zip(self.ID, oscFiles))))
-		
-		for i in oscFiles:		
-			filecontent = np.loadtxt(self.path.__add__(i), delimiter='\t',skiprows =1)
-			self.t.append(filecontent[:,0])
-			self.x.append(filecontent[:,1])
-			self.y.append(filecontent[:,2])
-			self.z.append(filecontent[:,3])
-		print("loaded " + str(N) + " source position files")
 
+		for i in oscFiles:
+			try:
+				filecontent = np.loadtxt(self.path.__add__(i), delimiter='\t', usecols=(1,2,3,4,5))
+			except:
+				filecontent = np.loadtxt(self.path.__add__(i), delimiter='\t', usecols=(1,2,3,4))
+			self.t.append(filecontent[:,0])
+			self.id.append(filecontent[:,1])
+			self.x.append(filecontent[:,2])
+			self.y.append(filecontent[:,3])
+			try:
+				self.z.append(filecontent[:,4])
+			except:
+				zlist = [] # create list with NaN if no z coordinate is given 
+				for j in range(0, len(filecontent[:,0])):
+					zlist.append(np.nan)
+				self.z.append(zlist)				
+				print('no z-coordinate given in ' + str(i))
+		print("loaded " + str(N) + " source position files")
+		
 class parser(filehandler):
 
 	def __init__(self, fh):
 		#pass data from filehandler 
 		self.ID = fh.ID
+		self.id = fh.id
 		self.t = fh.t
 		self.x = fh.x
 		self.y = fh.y
 		self.z = fh.z
 	
 		#standard value is Panoramix
-		self.renderer = 0
+		self.renderer = "panoramix"
 		self.ip = '127.0.0.1'
 		self.port = 4002
 	
@@ -68,23 +83,26 @@ class parser(filehandler):
 		
 		# binary list of sources to be played (linked to checkboxgrid in GUI)
 		self.sources_to_play = []
+		
+		#jack server
+		self.jclient = jack.Client('jack1')
 
 	def change_renderer(self, flag):
 		# flag = 0 -> Panoramix
 		# flag = 1 -> SSR
 		self.renderer = flag
-		if flag is 0:
+		if flag is "panoramix":
 			self.port=4002
-		if flag is 1:
+		if flag is "ssr":
 			self.port=50001
 
 	def sendOSC(self, msg):
 		self.sock.sendto(msg.dgram, (self.ip, self.port))
 
 	def connect(self):
-		if self.renderer is 0:
+		if self.renderer is "panoramix":
 			pass
-		if self.renderer is 1:
+		if self.renderer is "ssr":
 			#subscribe to SSR (SSR needs to be SERVER)
 			msg1 = omb.OscMessageBuilder(address="/subscribe")
 			msg1.add_arg(True,"T")
@@ -110,9 +128,9 @@ class parser(filehandler):
 	
 	# creates sources according to files in the project folder
 	def create_sources(self):
-		if self.renderer is 0:
+		if self.renderer is "panoramix":
 			pass #TO DO
-		if self.renderer is 1:
+		if self.renderer is "ssr":
 			N = len(self.ID)
 			for i in range(0,N):
 				msg = omb.OscMessageBuilder(address="/source/new")
@@ -130,64 +148,95 @@ class parser(filehandler):
 				self.sendOSC(msg)
 
 	def start_jack(self):
-		self.jclient = jack.Client('jack1')
 		self.jclient.activate()
 		self.jclient.transport_start() # is this necessary?
 
-	def play(self): # doesn't work yet
-		if self.renderer is 0:
-			pass #TO DO
-		if self.renderer is 1:
-			N = len(self.ID)
-			sampleoffset =[] # offset between start of movements of different sources with respect
-			sampleoffset[0] = 0 #  to first source in ID list
-			for i in range(1,N):
-				sampleoffset[i]=t[i][0]-t[0][0]
-			diffToJack=[] # desired sample difference between jack clock and samples in file
-			diffToJack[0] = self.jclient.transport_frame-t[0][0]
-			for i in range(1,N):
-				diffToJack[i]=diffToJack[0]-sampleoffset[i] 
+	def prepare_play(self):
+		# sources that want to be used need to be selected, when prepare_play() is called
+		# only those can be deselected and reselected in real-time while play() is running
 
-			sampleoffset =[]
-			#iterate through sources that should be played
-			for i in range(0,len(self.sources_to_play)):
-				if sources_to_play[i] is 0:
-					pass
-				if len(sampleoffset) is 0:
-					sampleoffset
-				else:
-					t_ix = 0
-					msg = omb.OscMessageBuilder(address="/source/position")
-					msg.add_arg(self.sources_to_play[i])
-					msg.add_arg(self.x[i][t_ix])
-					msg.add_arg(self.y[i][t_ix])
-					msg=msg.build()
-					self.sendOSC(msg)
-			while 1:
-				for i in range(0,len(self.sources_to_play)):
-					if sources_to_play[i] is 0:
-						pass
-					else:
-						pass	
-				
-										
+		N = len(self.ID)
 
+		self.ID_play =[]
+		self.id_play =[]
+		self.t_play = []
+		self.x_play =[]
+		self.y_play=[]
+		self.z_play = []
 
-				print('loop i=' + str(i)) 
-				print(self.t[i])
-				print(jackPos)
-				print(np.abs(self.t[i] - jackPos))  
-				tmpIdx = np.argmin(np.abs(self.t[i] -jackPos)) ##??
-				print(tmpIdx)
-				msg = omb.OscMessageBuilder(address="/source/position")
-				msg.add_arg(self.ID[i])  
-				msg.add_arg(self.x[i][tmpIdx]*5) #why *5??
-				msg.add_arg(self.y[i][tmpIdx]*-  5)
-				msg=msg.build()
-				self.sendOSC(msg)
-				last_jackPos = jackPos;
-				ime.sleep(0.02)
+		#self.sampleoffset =[] # offset between start of movements of different sources with respect to first source that should be played
+		for i in range(0,N):
+			if self.sources_to_play[i] != 0:
+				self.ID_play.append(self.ID[i])
+				self.id_play.append(self.id[i][:])
+				self.t_play.append(self.t[i][:])
+				self.x_play.append(self.x[i][:])
+				self.y_play.append(self.y[i][:])
+				self.z_play.append(self.z[i][:])
+
+		# NOW PUT ALL VALUES IN BIG LISTS AND SORT THEM ALL IN THE SAME WAY BY TIME INDEX		
+		 
+		self.iid = []
+		self.tt = []
+		self.xx = []
+		self.yy = []
+		self.zz = []
+		for i in range(0,len(self.ID_play)):
+			self.iid.extend(self.id_play[i])
+			self.tt.extend(self.t_play[i])
+			self.xx.extend(self.x_play[i])
+			self.yy.extend(self.y_play[i])
+			self.zz.extend(self.z_play[i])
+
+			
+		self.tt,self.iid, self.xx, self.yy, self.zz = (list(k) for k in 
+			zip(*sorted(zip(self.tt,self.iid,self.xx, self.yy, self.zz))))
+
+		if self.jclient.transport_state != 'ROLLING':
+			self.start_jack()
+
+		# TO DO if panoramix then generate polar coordinates
+
+	def play(self):
+		ix = 0 # index for iterating through lines from files for the sources to be played
+		l_ix = len(self.tt)
+		print(l_ix)
+		
+		init_jackPos = self.jclient.transport_frame
+		diffToJack = init_jackPos-self.tt[0] # desired sample difference between jack clock and samples in file
+		#PLAY
+		#TO DO: SEND FIRST LINE OSC
+
+		print(self.iid)
+		print(self.iid[0])
+		print(self.tt[0])
+		print(self.xx[0])
+		print(self.yy[0])
+		print(self.zz[0])
 	
+		ix =1
+		while 1:
+			if str(int(self.iid[ix])) in self.sources_to_play:			
+				#waiting for jack clock to arrive at desired sample value from file
+				while 1:
+					jackPos = self.jclient.transport_frame
+					if diffToJack <=jackPos - self.tt[ix]:
+					#TO DO sendOSC
+						print(ix)					
+						print(self.iid[ix])
+						print(self.tt[ix])
+						print(self.xx[ix])
+						print(self.yy[ix])
+						print(self.zz[ix])
+						break
+			ix = ix + 1
+			print(ix)
+			if ix == l_ix:
+				print('all values played')
+				break
+
+
+
 
 	
 
