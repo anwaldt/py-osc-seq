@@ -2,9 +2,11 @@ import numpy as np
 import jack
 import socket
 import time
+import math as m
 from os import listdir
 from os.path import isfile, join
 from pythonosc import osc_message_builder as omb
+from OSCcodec import decodeOSC
 
 
 
@@ -39,9 +41,13 @@ class filehandler(object):
 
 			
 			self.ID.append(int(filecontent[0]))
-
+		
+		print(self.ID)
+		print(oscFiles)
 		#sort oscFiles list in the same way as source ID list
-		self.ID, oscfiles = (list(k) for k in zip(*sorted(zip(self.ID, oscFiles))))
+		self.ID, oscFiles = (list(k) for k in zip(*sorted(zip(self.ID, oscFiles))))
+		print(self.ID)
+		print(oscFiles)
 
 		for i in oscFiles:
 			try:
@@ -117,7 +123,7 @@ class parser(filehandler):
 
 	# only necessary for SSR communication
 	def send_alive_messages(self):
-		if self.renderer is 1:
+		if self.renderer is "ssr":
 			msg = omb.OscMessageBuilder(address="/alive")
 			msg = msg.build()
 			while 1:
@@ -131,21 +137,23 @@ class parser(filehandler):
 		if self.renderer is "panoramix":
 			pass #TO DO
 		if self.renderer is "ssr":
-			N = len(self.ID)
-			for i in range(0,N):
-				msg = omb.OscMessageBuilder(address="/source/new")
-				msg.add_arg(str(self.ID[i]) , "s")	#name of source
-				msg.add_arg("point") 		  	#source type
-				msg.add_arg("1", "s") 
-				msg.add_arg(self.x[i][0], "f") 	  	#x-coordinate
-				msg.add_arg(self.y[i][0], "f") 		#y-coordinate
-				msg.add_arg(1.0, "f")			#orientation
-				msg.add_arg(1.0, "f")
-				msg.add_arg(False,"F")
-				msg.add_arg(False,"F")
-				msg.add_arg(False,"F")
-				msg=msg.build()
-				self.sendOSC(msg)
+			for i in range(0, len(self.sources_to_play)):
+				if self.sources_to_play[i] !=0:
+					msg = omb.OscMessageBuilder(address="/source/new")
+					msg.add_arg(self.sources_to_play[i], "s")	#name of source
+					print(self.sources_to_play[i])
+					msg.add_arg("point") 		  	#source type
+					msg.add_arg("1", "s") 
+					msg.add_arg(self.x[i][0], "f") 	  	#x-coordinate
+					msg.add_arg(self.y[i][0], "f") 		#y-coordinate
+					msg.add_arg(1.0, "f")			#orientation
+					msg.add_arg(1.0, "f")
+					msg.add_arg(False,"F")
+					msg.add_arg(False,"F")
+					msg.add_arg(False,"F")
+					msg=msg.build()
+					self.sendOSC(msg)
+					print("created sources in SSR")
 
 	def start_jack(self):
 		self.jclient.activate()
@@ -187,7 +195,7 @@ class parser(filehandler):
 			self.xx.extend(self.x_play[i])
 			self.yy.extend(self.y_play[i])
 			self.zz.extend(self.z_play[i])
-
+		print(self.iid)
 			
 		self.tt,self.iid, self.xx, self.yy, self.zz = (list(k) for k in 
 			zip(*sorted(zip(self.tt,self.iid,self.xx, self.yy, self.zz))))
@@ -195,25 +203,29 @@ class parser(filehandler):
 		if self.jclient.transport_state != 'ROLLING':
 			self.start_jack()
 
-		# TO DO if panoramix then generate polar coordinates
+		# if panoramix  is renderer generate polar coordinates
+		# !! sth. with the coordinate transform might not be correct. conversion to x,y,z in panoramix gives different cartesian coordinates (e.g. always z=0)
+		if self.renderer == "panoramix":
+			self.dist = []
+			self.az = []
+			self.el = []
+			for i in range (0, len(self.tt)):
+				self.dist.append(m.sqrt(self.xx[i]**2 + self.yy[i]**2 + self.zz[i]**2))
+				self.az.append(m.atan2(self.yy[i],self.xx[i]))
+				self.el.append(m.acos(self.zz[i]/self.dist[i]))
+		
+		self.connect()
+		self.create_sources()
 
+		
 	def play(self):
 		ix = 0 # index for iterating through lines from files for the sources to be played
 		l_ix = len(self.tt)
-		print(l_ix)
 		
 		init_jackPos = self.jclient.transport_frame
 		diffToJack = init_jackPos-self.tt[0] # desired sample difference between jack clock and samples in file
 		#PLAY
 		#TO DO: SEND FIRST LINE OSC
-
-		print(self.iid)
-		print(self.iid[0])
-		print(self.tt[0])
-		print(self.xx[0])
-		print(self.yy[0])
-		print(self.zz[0])
-	
 		ix =1
 		while 1:
 			if str(int(self.iid[ix])) in self.sources_to_play:			
@@ -221,19 +233,51 @@ class parser(filehandler):
 				while 1:
 					jackPos = self.jclient.transport_frame
 					if diffToJack <=jackPos - self.tt[ix]:
-					#TO DO sendOSC
-						print(ix)					
-						print(self.iid[ix])
-						print(self.tt[ix])
-						print(self.xx[ix])
-						print(self.yy[ix])
-						print(self.zz[ix])
+						#sendOSC
+						if self.renderer == "panoramix":
+							self.send_position_pan(self.iid[ix], self.dist[ix], self.az[ix], self.el[ix])
+						if self.renderer == "ssr":
+							self.send_position_ssr(self.iid[ix], self.xx[ix], self.yy[ix])
 						break
 			ix = ix + 1
-			print(ix)
 			if ix == l_ix:
 				print('all values played')
 				break
+
+	def send_position_pan(self, num, dist, az, el): 
+		add = "/track/" +str(int(num))+ "/dist"
+		msg = omb.OscMessageBuilder(address=add)
+		msg.add_arg(dist)
+		msg = msg.build()
+		self.sendOSC(msg)
+		print("sent "+ add + " " + str(dist) +" to PANORAMIX ( " + self.ip + " port: " + str(self.port) + " )")	
+
+		add = "/track/" +str(int(num))+ "/azim"
+		msg = omb.OscMessageBuilder(address=add)
+		msg.add_arg(az)
+		msg = msg.build()
+		self.sendOSC(msg)
+		print("sent "+ add + " " + str(az) +" to PANORAMIX ( " + self.ip + " port: " + str(self.port) + " )")
+
+		add = "/track/" +str(int(num))+ "/elev"
+		msg = omb.OscMessageBuilder(address=add)
+		msg.add_arg(el)
+		msg = msg.build()
+		self.sendOSC(msg)
+		print("sent "+ add + " " + str(el) +" to PANORAMIX ( " + self.ip + " port: " + str(self.port) + " )")
+
+	def send_position_ssr(self, num, x, y):
+		add ="/source/position"
+		msg = omb.OscMessageBuilder(address=add)
+		msg.add_arg(int(num))  
+		msg.add_arg(x)
+		msg.add_arg(y)
+		msg=msg.build()
+		self.sendOSC(msg)
+		print("sent "+ add + " " + str(int(num)) + " " +str(x) + " " + str(y) +" to SSR ( " + self.ip + " port: " + str(self.port) + " )")	
+
+		
+		
 
 
 

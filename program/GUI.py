@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QInputDialog,
-	QPushButton, QApplication, QLabel, QCheckBox, QAction, QMainWindow, QFileDialog)
+	QPushButton, QApplication, QLabel, QCheckBox, QAction, QMainWindow, QFileDialog, QSizePolicy)
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from classes import filehandler, parser
@@ -13,7 +13,7 @@ class MainWindow(QMainWindow):
 
 	def initUI(self):
 
-		self.setGeometry(300, 300, 800, 800)
+		self.setGeometry(300, 300, 1000, 1000)
 		self.setWindowTitle('program')
 		
 
@@ -59,38 +59,65 @@ class checkboxgrid(QWidget):
 
 	def initUI(self):
 		self.grid = QGridLayout()
-		self.grid.setColumnStretch(0,1)
-		self.grid.setColumnStretch(1,1)
-		self.grid.setColumnStretch(2,1)
-		self.grid.setRowStretch(0,1)
-		self.grid.setRowStretch(1,1)
 		self.setLayout(self.grid)
+		#self.grid.setColumnStretch(0,1)
+		#self.grid.setColumnStretch(1,1)
+		#self.grid.setColumnStretch(2,1)
+		#self.grid.setRowStretch(0,1)
+		#self.grid.setRowStretch(1,1)
+		
+		self.sp = QSizePolicy()
+		self.sp.setHorizontalStretch(0)
+		self.sp.setVerticalStretch(0)
 		
 	
 	def initCBG(self,fh):
 		
 		self.parser = parser(fh)
+
+		## CHANGE RENDERER ##
+
+		self.pan = QCheckBox('Panoramix')
+		self.ssr = QCheckBox('SSR')
+
+		self.pan.setSizePolicy(self.sp)
+		self.ssr.setSizePolicy(self.sp)		
+
+
+		self.grid.addWidget(self.pan,0,0 )
+		self.grid.addWidget(self.ssr,0,1 )
+
+		self.pan.setCheckState(QtCore.Qt.Checked)
+
+		self.pan.stateChanged.connect(lambda checked: self.click_pan(self.pan))
+		self.ssr.stateChanged.connect(lambda checked: self.click_ssr(self.ssr))
 		
 		## PLAY AND PREPARE PLAY BUTTON ##
 
 		self.prepare_play = QPushButton('prepare playing', self)
-		self.grid.addWidget(self.prepare_play, 0, 0)
+		self.prepare_play.setSizePolicy(self.sp)
+		self.grid.addWidget(self.prepare_play, 1, 0)
 		self.prepare_play.clicked.connect(self.prepare_play_pressed)
 
 		self.play = QPushButton('PLAY', self)
-		self.grid.addWidget(self.play, 0, 1)
-		self.play.clicked.connect(self.play_pressed)
+		self.play.setSizePolicy(self.sp)
+		self.grid.addWidget(self.play, 1, 1)
+		self.play.clicked.connect(self.play_pressed)	
 
 
 		## TABLE WITH CHECKBOXES ##
 		
-		textSOURCES = QLabel('SOURCES')		
+		textSOURCES = QLabel('SOURCES')
 		textPLAY = QLabel('PLAY')
 		textREC = QLabel('REC')
 
-		self.grid.addWidget(textSOURCES, 1,0)
-		self.grid.addWidget(textPLAY, 1,1)
-		self.grid.addWidget(textREC, 1,2)
+		textSOURCES.setSizePolicy(self.sp)
+		textPLAY.setSizePolicy(self.sp)
+		textREC.setSizePolicy(self.sp)
+
+		self.grid.addWidget(textSOURCES, 2,0)
+		self.grid.addWidget(textPLAY, 2,1)
+		self.grid.addWidget(textREC, 2,2)
 
 		numbers = fh.ID #source ID list from filehandler
 		N = len(numbers)
@@ -117,19 +144,38 @@ class checkboxgrid(QWidget):
 		for i in range (0,N):
 
 			self.labelnames[i] = QLabel(numbers[i])
-			self.grid.addWidget(self.labelnames[i], i+2,0)
+			self.labelnames[i].setSizePolicy(self.sp)
+			self.grid.addWidget(self.labelnames[i], i+3,0)
+			
 
 			pcb[i] = QCheckBox('')
-			self.grid.addWidget(pcb[i], i+2, 1)
+			pcb[i].setSizePolicy(self.sp)
+			self.grid.addWidget(pcb[i], i+3, 1)
 			pcb[i].stateChanged.connect(lambda checked, i=i: self.click_pcb(pcb[i], numbers[i], i))
 			
 			rcb[i] = QCheckBox('')
-			self.grid.addWidget(rcb[i], i+2, 2)
+			rcb[i].setSizePolicy(self.sp)
+			self.grid.addWidget(rcb[i], i+3, 2)
 			rcb[i].stateChanged.connect(lambda checked, i=i: self.click_rcb(rcb[i], numbers[i], i))
 
 			self.grid.setRowStretch(i+2,1)
-		
+
+		## SHOW ##
+
 		self.show()
+
+	def click_pan(self, pan):
+		if pan.isChecked():
+			self.parser.change_renderer("panoramix")
+			self.ssr.setCheckState(QtCore.Qt.Unchecked)
+			print("switched to Panoramix Renderer")
+
+	
+	def click_ssr(self,ssr):
+		if ssr.isChecked():
+			self.parser.change_renderer("ssr")
+			self.pan.setCheckState(QtCore.Qt.Unchecked)
+			print("switched to Sound Scape Renderer")
 		
 
 	# actions that happen when checkboxes are clicked
