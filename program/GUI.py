@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QInputDialog, QMessageBox,
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 from classes import filehandler, parser
+from re import findall
 
 class MainWindow(QMainWindow):
 
@@ -26,9 +27,15 @@ class MainWindow(QMainWindow):
 		changeProject = QAction('&choose Project folder', self)
 		changeProject.triggered.connect(self.showDialog1)
 
-		loadFiles = QAction('&load files', self)
-		loadFiles.triggered.connect(self.read_and_generate_cbg)
-	
+		loadFiles = QAction('&load files for playing', self)
+		loadFiles.triggered.connect(self.read_and_generate_cbg_play)
+
+		setRecord = QAction('&start with recording', self)
+		setRecord.triggered.connect(self.setRecord)
+
+		change_writepath = QAction('&set seperate path for recording', self)
+		change_writepath.triggered.connect(self.change_writepath)
+
 		addPrefix = QAction('&add filename prefix for recording', self)
 		addPrefix.triggered.connect(self.addPrefix)
 		
@@ -38,11 +45,15 @@ class MainWindow(QMainWindow):
 		fileMenu = menubar.addMenu('&File')
 		fileMenu.addAction(changeProject)
 		fileMenu.addAction(loadFiles)
+		fileMenu.addAction(setRecord)
+		fileMenu.addAction(change_writepath)
 		fileMenu.addAction(addPrefix)
 		
 		## -- ##
 		self.cbg = checkboxgrid()
 		self.setCentralWidget(self.cbg)	
+		# list with sources if "start with recording" is chosen
+		self.sourcelist = []
 
 		self.show()
 
@@ -50,10 +61,31 @@ class MainWindow(QMainWindow):
 		path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
 		self.fh.set_path(path + "/")
 	
-	def read_and_generate_cbg(self):
+	def read_and_generate_cbg_play(self):
 		self.fh.read_all()
-		self.parser = parser(self.fh)
-		self.cbg.initCBG(self.fh, self.parser)
+		self.parser = parser(self.fh, self.sourcelist)
+		self.cbg.initCBG(self.fh, self.parser,"play", self.sourcelist)
+	
+	def read_and_generate_cbg_rec(self):
+		self.fh.read_all()
+		self.parser = parser(self.fh, self.sourcelist)
+		self.cbg.initCBG(self.fh, self.parser,"record", self.sourcelist)
+
+	def setRecord(self):
+		text, ok = QInputDialog.getText(self, 'start with recording', 'Which sources do you want to make recordable? (enter for example 1-5 or 3,4,7)')
+        
+		if ok:
+			if "-" in text:
+				l = list(map(int, findall('\d+', text)))
+				for i in range(l[0], l[1]+1):
+					self.sourcelist.append(str(i))
+			elif "," in text:
+				l = list(map(int, findall('\d+', text)))
+				for i in range(0, len(l)):
+					self.sourcelist.append(str(l[i]))
+			else:
+				self.sourcelist.append(text)	
+			self.read_and_generate_cbg_rec()
 
 	def addPrefix(self):
 		if self.cbg.recording == 0:
@@ -64,6 +96,11 @@ class MainWindow(QMainWindow):
 				print(str(text))
 		else: 
 			QMessageBox.about(self,"add prefix to filenames for recording", "stop Recording first")
+	
+	def change_writepath(self):
+		path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+		self.parser.change_writepath(path + "/")
+		
 
 	def closeEvent(self, event):
 		try:
@@ -105,10 +142,12 @@ class checkboxgrid(QWidget):
 		self.sp.setVerticalStretch(0)
 		
 	
-	def initCBG(self, fh, parser):
+	def initCBG(self, fh, parser, playorrecord, sourcelist):
 		
 		self.fh = fh
 		self.parser = parser
+		self.playorrecord = playorrecord
+		self.sourcelist = sourcelist
 
 		## CHANGE RENDERER ##
 
@@ -170,8 +209,13 @@ class checkboxgrid(QWidget):
 		self.grid.addWidget(textSOURCES, 2,0)
 		self.grid.addWidget(textPLAY, 2,1)
 		self.grid.addWidget(textREC, 2,2)
-
-		numbers = self.fh.ID #source ID list from filehandler
+		
+		if self.playorrecord == "play":
+			numbers = self.fh.ID #source ID list from filehandler
+		elif self.playorrecord == "record":
+			numbers = self.sourcelist
+		print("numbers")
+		print(numbers)
 		N = len(numbers)
 		
 		for i in range(0,N):
@@ -278,8 +322,8 @@ class checkboxgrid(QWidget):
 	def prepare_rec_pressed(self):
 		self.parser.prepare_record()
 		self.prepare_rec.setStyleSheet("background-color: yellow")
-		for i in range(0,len(self.fh.ID)):
-			if str(self.fh.ID[i]) in self.parser.sources_to_play:
+		for i in range(0,len(self.parser.ID_rec)):
+			if str(self.fh.ID[i]) in self.parser.sources_to_record:
 				self.rcb[i].setStyleSheet("background-color: yellow")
 			else: 
 				self.rcb[i].setStyleSheet("background-color: white")

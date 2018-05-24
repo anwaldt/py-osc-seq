@@ -4,7 +4,7 @@ import socket
 import time
 import math as m
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, dirname, abspath
 from pythonosc import osc_message_builder as omb
 from OSCcodec import decodeOSC
 from multiprocessing import Process
@@ -69,9 +69,10 @@ class filehandler(object):
 		
 class parser(filehandler):
 
-	def __init__(self, fh):
+	def __init__(self, fh, ID_rec):
 		#pass data from filehandler 
 		self.ID = fh.ID
+		self.ID_rec = ID_rec
 		self.id = fh.id
 		self.t = fh.t
 		self.x = fh.x
@@ -109,10 +110,17 @@ class parser(filehandler):
 		self.filenames_w =[]
 		self.filesopen_w = []
 		self.prefix =""	
-		for i in range(0,len(self.ID)):
-			self.writefiles.append(self.ID[i])
-			self.filenames_w.append(self.prefix +"pos"+str(self.ID[i]))
-			self.filesopen_w.append(0) 	
+		for i in range(0,len(self.ID_rec)):
+			self.writefiles.append(self.ID_rec[i])
+			self.filenames_w.append(self.prefix +"pos"+str(self.ID_rec[i]))
+			self.filesopen_w.append(0) 
+		rel_writepath = "/project/record/"
+		self.currentpath = dirname(abspath(__file__))
+		self.writepath = self.currentpath + rel_writepath
+	
+	def change_writepath(self, path):
+		self.writepath = path	
+			
 		
 
 	def change_renderer(self, flag):
@@ -234,14 +242,17 @@ class parser(filehandler):
 
 		# if panoramix  is renderer generate polar coordinates
 		# !! sth. with the coordinate transform might not be correct. conversion to x,y,z in panoramix gives different cartesian coordinates (e.g. always z=0)
+		# --> should be solved
 		if self.renderer == "panoramix":
 			self.dist = []
 			self.az = []
 			self.el = []
 			for i in range (0, len(self.tt)):
 				self.dist.append(m.sqrt(self.xx[i]**2 + self.yy[i]**2 + self.zz[i]**2))
-				self.az.append(m.atan2(self.yy[i],self.xx[i]))
-				self.el.append(m.acos(self.zz[i]/self.dist[i]))
+				az = m.atan2(self.yy[i],self.xx[i])
+				self.az.append(90-az/(2*m.pi)*360)
+				el = m.acos(self.zz[i]/self.dist[i])
+				self.el.append(90-el/(2*m.pi)*360)
 		
 		self.connect()
 		self.create_sources()
@@ -322,7 +333,7 @@ class parser(filehandler):
 				self.OSCrecord_list_azim.append("/track/" + self.sources_to_record[i] +"/azim")
 				# open files to record to if not yet open
 				if self.filesopen_w[i] == 0:
-					self.writefiles[i] = open(self.filenames_w[i],"w")
+					self.writefiles[i] = open(join(self.writepath,self.filenames_w[i]),"w")
 					self.filesopen_w[i] = 1
 			else:
 				# adding empty strings if there's nothing to record
@@ -341,7 +352,7 @@ class parser(filehandler):
 	def _record(self):
 		# no info at the beginning.... #TO DO in play: skip lines where NaN appears
 		dist = np.nan
-		elev = np.nan
+		elev = 0
 		azim = np.nan
 		while 1:
 			data1, addr = self.recv_sock.recvfrom(2056) # buffer size is 2056 bytes
@@ -349,21 +360,30 @@ class parser(filehandler):
 			if data1[0] in self.OSCrecord_list_dist:
 				i = self.OSCrecord_list_dist.index(data1[0])
 				dist = data1[2]
-				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(dist)+"\t"+str(elev)+"\t"+str(azim)+"\n")
+				x = dist * m.sin((90-elev)/360*2*m.pi)*m.cos((90-azim)/360*2*m.pi)
+				y = dist * m.sin((90-elev)/360*2*m.pi)*m.sin((90-azim)/360*2*m.pi)
+				z = dist * m.cos((90-elev)/360*2*m.pi)
+				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(x)+"\t"+str(y)+"\t"+str(z)+"\n")
 				self.writefiles[i].flush()
 				print(data1)
 				data1 = "-"
 			elif data1[0] in self.OSCrecord_list_azim:
 				i =self.OSCrecord_list_azim.index(data1[0])
 				azim = data1[2]
-				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(dist)+"\t"+str(elev)+"\t"+str(azim)+"\n")
+				x = dist * m.sin((90-elev)/360*2*m.pi)*m.cos((90-azim)/360*2*m.pi)
+				y = dist * m.sin((90-elev)/360*2*m.pi)*m.sin((90-azim)/360*2*m.pi)
+				z = dist * m.cos((90-elev)/360*2*m.pi)
+				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(x)+"\t"+str(y)+"\t"+str(z)+"\n")
 				self.writefiles[i].flush()
 				print(data1)
 				data1 = "-"
 			elif data1[0] in self.OSCrecord_list_elev:
 				i=self.OSCrecord_list_elev.index(data1[0])
 				elev =data1[2]
-				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(dist)+"\t"+str(elev)+"\t"+str(azim)+"\n")
+				x = dist * m.sin((90-elev)/360*2*m.pi)*m.cos((90-azim)/360*2*m.pi)
+				y = dist * m.sin((90-elev)/360*2*m.pi)*m.sin((90-azim)/360*2*m.pi)
+				z = dist * m.cos((90-elev)/360*2*m.pi)
+				self.writefiles[i].write("positions\t"+str(self.jclient.transport_frame)+"\t"+str(self.ID[i])+"\t"+str(x)+"\t"+str(y)+"\t"+str(z)+"\n")
 				self.writefiles[i].flush()
 				print(data1)
 				data1 = "-"
