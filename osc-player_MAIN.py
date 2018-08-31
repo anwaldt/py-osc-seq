@@ -1,18 +1,32 @@
 import argparse
 import jack
 import os
+import time
+
+import threading
+import _thread
+
+from os import listdir
+from os.path import isfile, join
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
 
+from JackTime import JackTime
+
+from OscPlayer import OscPlayer
+
+from OscConnect import OscSender
+from OscConnect import OscServer
+
 import sys
 
 from PyQt5.QtCore import Qt
 
-from PyQt5.QtWidgets import (QMainWindow, QTextEdit,     QAction, QFileDialog, QApplication, QLineEdit)
+from PyQt5.QtWidgets import (QMainWindow,     QAction, QFileDialog)
 
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QGridLayout, QGroupBox,QDialog, QSlider,
+from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider,
         QMenu, QPushButton, QRadioButton, QVBoxLayout,QHBoxLayout, QWidget, QButtonGroup, QAbstractButton, QLabel)
 
 
@@ -22,11 +36,19 @@ from PyQt5.QtGui import (QIcon)
 count = 1
 
 
-class OscPlayer(QMainWindow):
+class OscPlayerMain(QMainWindow):
+    
+    jackPos = 0
+    last_jackPos = 0
     
     
+    
+    OSCout = OscSender()
+    OSCin = OscServer()
+
     glayout = QGridLayout()
 
+    objectList = []
 
  
     oscPath = 0;
@@ -71,37 +93,42 @@ class OscPlayer(QMainWindow):
 
 
         p =  QPushButton("Add Source")
-
-        self.glayout.addWidget(p)
-        
+        self.glayout.addWidget(p)        
         p.clicked.connect(self.Add)
+
+
+        jBut = QPushButton("Connect to Jack")
+        self.glayout.addWidget(jBut)
+        jBut.clicked.connect(self.handleJackConnect)
         
         self.currencyButton =  QPushButton("Plot source(s)")
-        self.glayout.addWidget(self.currencyButton)
-        
+        self.glayout.addWidget(self.currencyButton)        
         self.currencyButton.clicked.connect(self.handlePlotButton)    
     
         wid = QWidget(self)
         self.setCentralWidget(wid)
 
 
-        for count in range(1,33):       
-            self.Add();
+        
+                        
+
         
        
             
             
         self.setGeometry(300, 300, 350, 300)
-        self.setWindowTitle('PY OSC PLAYER')
+        self.setWindowTitle('PYROscp')
         self.show()
         wid.setLayout(self.glayout)
 
         
     
-    def Add(self):
+    def Add(self, oscFile):
         
         global count
-     
+             
+        self.objectList.append(OscPlayer(oscFile, count))
+
         
         l1 = QLabel()
         l1.setText("Source "+str(count))
@@ -171,13 +198,36 @@ class OscPlayer(QMainWindow):
         window = PlotWindow(self)
         window.show()
 
+    def handleJackConnect(self):        
+    
             
+        self.jack_client = jack.Client('osc-player')
+        self.jack_client.activate();
+        
+        #_thread.start_new_thread( JackTime, () )
+         
+       
+        t = threading.Thread(target=self.JackClocker)
+             
+        t.start()
+
+        
     def openProject(self):
 
         fname = QFileDialog.getExistingDirectory(self, 'Select directory')
 
         if fname[0]:
-            self.oscPath = fname[0], 'r'
+            self.oscPath = fname
+            
+        print(fname)
+        
+        
+        oscFiles = [f for f in listdir(self.oscPath) if isfile(join(self.oscPath, f))]
+
+
+        for count in oscFiles:
+                  
+            self.Add(self.oscPath.__add__("/").__add__(count));
             
  
 
@@ -199,7 +249,28 @@ class OscPlayer(QMainWindow):
        d.exec_()
 
 
+    def JackClocker(self):
+    
+        print("starting jack")
+
+        while 1:
+                       
+            jackPos = self.jack_client.transport_frame
+            
+            
+            if jackPos != self.last_jackPos:
+#                        
+                            
+                print(jackPos)
+
+                for i in range(1,6):
+                                  
+                    self.objectList[i].JackPosChange()
+                    
+                
+                self.last_jackPos = jackPos;    
         
+            time.sleep(0.002)          
         
 class PlotWindow(QMainWindow):
     
@@ -240,5 +311,5 @@ if __name__ == "__main__":
     
 
     app = QApplication(sys.argv)
-    ex = OscPlayer()
+    ex = OscPlayerMain()
     sys.exit(app.exec_())
