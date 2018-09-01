@@ -20,6 +20,8 @@ from OscPlayer import OscPlayer
 from OscConnect import OscSender
 from OscConnect import OscServer
 
+from PlotWindow import PlotWindow
+
 import sys
 
 from PyQt5.QtCore import Qt
@@ -38,20 +40,7 @@ count = 1
 
 class OscPlayerMain(QMainWindow):
     
-    jackPos = 0
-    last_jackPos = 0
-    
-    
-    
-    OSCout = OscSender()
-    OSCin = OscServer()
-
     glayout = QGridLayout()
-
-    objectList = []
-
- 
-    oscPath = 0;
     
     
     def __init__(self):
@@ -60,6 +49,20 @@ class OscPlayerMain(QMainWindow):
         
         self.initUI()
         
+        self.jackPos      = 0
+        self.last_jackPos = 0
+    
+    
+    
+        self.OSCout = OscSender()
+        self.OSCin  = OscServer()
+
+         
+
+        self.PlayerObjects = []
+
+ 
+        self.oscPath     = 0;
         
     def initUI(self):  
         
@@ -92,9 +95,9 @@ class OscPlayerMain(QMainWindow):
         #--------- BUTTONS --------------------------------------------------
 
 
-        p =  QPushButton("Add Source")
-        self.glayout.addWidget(p)        
-        p.clicked.connect(self.Add)
+        pBut =  QPushButton("Add Source")
+        self.glayout.addWidget(pBut)        
+        pBut.clicked.connect(self.handleAddButton)
 
 
         jBut = QPushButton("Connect to Jack")
@@ -104,31 +107,40 @@ class OscPlayerMain(QMainWindow):
         self.currencyButton =  QPushButton("Plot source(s)")
         self.glayout.addWidget(self.currencyButton)        
         self.currencyButton.clicked.connect(self.handlePlotButton)    
+
+
+        #--------- window setup --------------------------------------------------
+
     
-        wid = QWidget(self)
+        wid = QWidget(self)        
         self.setCentralWidget(wid)
 
-
-        
-                        
-
-        
-       
-            
             
         self.setGeometry(300, 300, 350, 300)
         self.setWindowTitle('PYROscp')
         self.show()
         wid.setLayout(self.glayout)
 
+
+###############################################################################################
+# 
         
+    def handleAddButton(self):
+        
+        global count
+        
+        self.Add(str(count))
+        count += 1
+    
+###############################################################################################
+# method for adding a source, including gui elements        
+    
     
     def Add(self, oscFile):
         
         global count
              
-        self.objectList.append(OscPlayer(oscFile, count))
-
+        self.PlayerObjects.append(OscPlayer(count))
         
         l1 = QLabel()
         l1.setText("Source "+str(count))
@@ -145,11 +157,8 @@ class OscPlayerMain(QMainWindow):
         group.addButton(option_2)
         group.addButton(option_3)
         
-        # buttonClicked signals with two different signatures
-        group.buttonClicked['QAbstractButton *'].connect(self.button_clicked)
-        group.buttonClicked['int'].connect(self.button_clicked)
-
- 
+   
+    
            
 
         if 0 < count <= 16:
@@ -167,37 +176,23 @@ class OscPlayerMain(QMainWindow):
         elif 48 < count :
             yoff  = 12
             xoff  = 48
-        
-            
-            
-            
-        
+                
         #b.clicked.connect(self.Button)
         self.glayout.addWidget(l1,      0+yoff,count-xoff)
         self.glayout.addWidget(option_1,1+yoff,count-xoff)
         self.glayout.addWidget(option_2,2+yoff,count-xoff)        
         self.glayout.addWidget(option_3,3+yoff,count-xoff)
      
-        count += 1
-     
-    def Button(self):
-        pass
-
-    #@pyqtSlot(QAbstractButton)
-    #@pyqtSlot(int)
-    
-    def button_clicked(self, button_or_id):
-        if isinstance(button_or_id, QAbstractButton):
-            #self.output_1.setText('"{}" was clicked'.format(button_or_id.text()))
-            1;
-        elif isinstance(button_or_id, int):
-            #self.output_2.setText('"Id {}" was clicked'.format(button_or_id))
-            2;
-
+###############################################################################################
+# 
     def handlePlotButton(self):
         window = PlotWindow(self)
         window.show()
 
+
+###############################################################################################
+# 
+        
     def handleJackConnect(self):        
     
             
@@ -211,25 +206,49 @@ class OscPlayerMain(QMainWindow):
              
         t.start()
 
+
+###############################################################################################
+# 
         
     def openProject(self):
 
+        global count
+        
         fname = QFileDialog.getExistingDirectory(self, 'Select directory')
 
         if fname[0]:
             self.oscPath = fname
             
-        print(fname)
+       
         
         
         oscFiles = [f for f in listdir(self.oscPath) if isfile(join(self.oscPath, f))]
 
+        #--------- create objects, first --------------------------------------------------
 
-        for count in oscFiles:
+
+        for f in oscFiles:
                   
-            self.Add(self.oscPath.__add__("/").__add__(count));
+            oscFile = self.oscPath.__add__("/").__add__(f);
             
- 
+            print(oscFile)
+            print(str(count))
+            
+            self.Add(count);
+            
+            count += 1
+
+        #--------- load data --------------------------------------------------
+
+        count = 0
+        
+        for f in oscFiles:
+                
+            self.PlayerObjects[count].LoadFile(self.oscPath+"/"+f)
+            count +=1
+
+###############################################################################################
+#  
 
     def newProject(self):
 
@@ -239,6 +258,9 @@ class OscPlayerMain(QMainWindow):
             self.oscPath = fname[0], 'r' 
                 
                
+
+###############################################################################################
+# 
             
     def showdialog():
        d = QDialog()
@@ -249,61 +271,35 @@ class OscPlayerMain(QMainWindow):
        d.exec_()
 
 
+###############################################################################################
+# 
+       
     def JackClocker(self):
     
         print("starting jack")
 
         while 1:
                        
-            jackPos = self.jack_client.transport_frame
+            self.jackPos = self.jack_client.transport_frame
             
             
-            if jackPos != self.last_jackPos:
-#                        
-                            
-                print(jackPos)
+            if self.jackPos != self.last_jackPos:
+# 
 
-                for i in range(1,6):
+                for i in self.PlayerObjects:
                                   
-                    self.objectList[i].JackPosChange()
+                    i.JackPosChange(self.jackPos, self.OSCout)
                     
                 
-                self.last_jackPos = jackPos;    
+                self.last_jackPos = self.jackPos;    
         
             time.sleep(0.002)          
-        
-class PlotWindow(QMainWindow):
-    
-    def __init__(self, parent=None):
-        
-        super(PlotWindow, self).__init__(parent)
-        
-        wid = QWidget(self)
-        
-        self.setCentralWidget(wid)
-        
-        layout = QVBoxLayout()
-         
-        self.setGeometry(  350, 300, 700, 700)    
-        self.sl = QSlider(Qt.Horizontal)
-        self.sl.setMinimum(0)
-        self.sl.setMaximum(300)
-        self.sl.setValue(0)
-        self.sl.setTickPosition(QSlider.TicksBelow)
-        self.sl.setTickInterval(10)        
-        layout.addWidget(self.sl)
+   
 
-         
-        self.sl2 = QSlider(Qt.Horizontal)
-        self.sl2.setMinimum(0)
-        self.sl2.setMaximum(300)
-        self.sl2.setValue(300)
-        self.sl2.setTickPosition(QSlider.TicksBelow)
-        self.sl2.setTickInterval(10)        
-        layout.addWidget(self.sl2)
+###############################################################################################
+# 
+            
 
-                    
-        wid.setLayout(layout)
 
 
 

@@ -11,18 +11,21 @@ from pythonosc import udp_client
 from pythonosc import osc_server
 from pythonosc import osc_message_builder as omb
     
+osc_client =[]
+
 class OscSender:
-    
-    
     
     
     
     def __init__(self):
     
-        osc_client  = udp_client.SimpleUDPClient("127.0.0.1", 4002)
+        self.osc_client  = udp_client.SimpleUDPClient("127.0.0.1", 4002)
         
+     
+    def SendMsg(self,msg):
         
-   
+        self.osc_client.send(msg)
+         
         # only needed for SSR
         # osc_client.send_message("/poll",' ') 
         

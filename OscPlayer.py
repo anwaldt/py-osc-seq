@@ -1,45 +1,83 @@
 
 import numpy as np
+import math
+
+from OscConnect import OscSender
+from pythonosc import osc_message_builder as omb
+
+
 
 class OscPlayer:	
     
-    
 
     
-    # value vectors
-    t  = [];
-    x  = [];
-    y  = [];
+    def __init__(self, id):
+    
+        self.isrecording = 0;
+        self.isplaying   = 0;
+    
+    
+        self.t  = []
+        self.x  = []
+        self.y  = []
     
     # recording buffers
-    t_IN  = [];
-    x_IN  = [];
-    y_IN  = [];
+        self.t_IN  = []
+        self.x_IN  = []
+        self.y_IN  = []
     
-    
-    
-    isrecording = 0;
-    isplaying   = 0;
-    
-    def __init__(self, oscf,id):
-        
         self.ID = id
          
+        
+    def LoadFile(self, oscf):
+        
         self.OscFile = oscf
-        
-        
-        print(oscf)
+         
+        print("Loading data from: ".__add__(oscf))
             
         positions  = np.loadtxt(oscf, delimiter='\t', usecols=(1,2,3,4))
     
-        self.t.append(positions[:,0])
+        self.t = positions[:,0]
         #self.tID.append(positions[:,1])
-        self.x.append(positions[:,2])
-        self.y.append(positions[:,3])
+        self.x = positions[:,2]
+        self.y = positions[:,3]
+        
+        print("datapoints: "+str(np.size(self.t)))
+      
+ 
+        
+    def JackPosChange(self, jackPos, osc_client):
+        
+     
+        
+
+         
+        tmpIdx = np.argmin(np.abs( np.subtract(self.t , jackPos)))
+                 
+
+        #print("Temp index: "+str(tmpIdx))   
+
+       
+        X = self.x[tmpIdx]
+        Y = self.y[tmpIdx]
+        
+   
+        
+        r = np.sqrt(X*X+Y*Y)
+        
+        azimuth = np.tanh(Y/X)*(180/math.pi)
         
         
-    def JackPosChange(self):
+        msg = omb.OscMessageBuilder(address="/track/"+str(self.ID)+"/azim")        
+        msg.add_arg(azimuth)          
+        msg=msg.build()
+        osc_client.SendMsg(msg)
         
-        print('pos change')
+        msg = omb.OscMessageBuilder(address="/track/"+str(self.ID)+"/dist")        
+        msg.add_arg(r)          
+        msg=msg.build()
+
+                
+        osc_client.SendMsg(msg)
         
         
