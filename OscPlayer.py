@@ -13,8 +13,12 @@ class OscPlayer:
     
     def __init__(self, id):
     
-        self.isrecording = 0;
-        self.isplaying   = 0;
+        # states
+        # 0 = off
+        # 1 = play
+        # 2 = record
+        
+        self.state = "OFF";
     
     
         self.t  = []
@@ -47,11 +51,7 @@ class OscPlayer:
  
         
     def JackPosChange(self, jackPos, osc_client):
-        
-     
-        
-
-         
+   
         tmpIdx = np.argmin(np.abs( np.subtract(self.t , jackPos)))
                  
 
@@ -81,3 +81,20 @@ class OscPlayer:
         osc_client.SendMsg(msg)
         
         
+    def ChangeState(self, msg):
+        
+    
+        #s = self.f(msg)
+
+#        if msg=="OFF":
+#            
+#        if msg=="R":
+#         
+#        if msg=="W":
+            
+        self.state=msg;
+
+    
+                
+    
+    

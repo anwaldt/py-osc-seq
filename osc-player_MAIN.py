@@ -47,6 +47,8 @@ class OscPlayerMain(QMainWindow):
         
         super().__init__()
         
+        self.tmpID = 0
+        
         self.initUI()
         
         self.jackPos      = 0
@@ -131,7 +133,25 @@ class OscPlayerMain(QMainWindow):
         
         self.Add(str(count))
         count += 1
+  
     
+# button_clicked slot
+#    @pyqtSlot(QtGui.QAbstractButton)
+#    @pyqtSlot(int)
+    def button_clicked_1(self, button_or_id):
+    
+#        print('"{}" was clicked'.format(button_or_id.text()))
+             
+        self.PlayerObjects[self.tmpID].ChangeState(button_or_id.text())
+    
+    def button_clicked_2(self, button_or_id):
+        
+             
+        
+#        print('"Id {}" was clicked'.format(button_or_id))  
+        
+        self.tmpID = button_or_id 
+            
 ###############################################################################################
 # method for adding a source, including gui elements        
     
@@ -151,15 +171,23 @@ class OscPlayerMain(QMainWindow):
         option_3 = QRadioButton('W')
         option_1.setChecked(True)  # default option
 
+        
+        
         # button group
         group = QButtonGroup(self)
         group.addButton(option_1)
         group.addButton(option_2)
         group.addButton(option_3)
         
-   
-    
-           
+        
+        # all buttons of one group have the same ID
+        group.setId(option_1,count-1)
+        group.setId(option_2,count-1)
+        group.setId(option_3,count-1)
+
+
+        group.buttonClicked['QAbstractButton *'].connect(self.button_clicked_1)        
+        group.buttonClicked['int'].connect(self.button_clicked_2)
 
         if 0 < count <= 16:
             yoff = 0
@@ -288,7 +316,9 @@ class OscPlayerMain(QMainWindow):
 
                 for i in self.PlayerObjects:
                                   
-                    i.JackPosChange(self.jackPos, self.OSCout)
+                    if i.state=="R":
+                                            
+                        i.JackPosChange(self.jackPos, self.OSCout)
                     
                 
                 self.last_jackPos = self.jackPos;    
