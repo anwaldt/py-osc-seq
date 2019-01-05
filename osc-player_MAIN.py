@@ -26,7 +26,7 @@ import sys
 
 from PyQt5.QtCore import Qt
 
-from PyQt5.QtWidgets import (QMainWindow,     QAction, QFileDialog)
+from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QCheckBox, QLineEdit)
 
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider,
         QMenu, QPushButton, QRadioButton, QVBoxLayout,QHBoxLayout, QWidget, QButtonGroup, QAbstractButton, QLabel)
@@ -39,6 +39,8 @@ count = 1
 
 
 class OscPlayerMain(QMainWindow):
+    
+    """ The main OSC player tning """
     
     glayout = QGridLayout()
     
@@ -55,6 +57,7 @@ class OscPlayerMain(QMainWindow):
         self.last_jackPos = 0
     
     
+        self.fs = 0;
     
         self.OSCout = OscSender()
         self.OSCin  = OscServer()
@@ -94,7 +97,7 @@ class OscPlayerMain(QMainWindow):
         fileMenu.addAction(newDirectory)      
         
     
-        #--------- BUTTONS --------------------------------------------------
+        #--------- BUTTONS on left  --------------------------------------------------
 
 
         pBut =  QPushButton("Add Source")
@@ -102,9 +105,23 @@ class OscPlayerMain(QMainWindow):
         pBut.clicked.connect(self.handleAddButton)
 
 
+        self.textbox = QLineEdit(self)        
+        self.glayout.addWidget(self.textbox);
+        
+
         jBut = QPushButton("Connect to Jack")
         self.glayout.addWidget(jBut)
         jBut.clicked.connect(self.handleJackConnect)
+        
+        
+        self.b = QCheckBox("Connected?")
+        #self.b.stateChanged.connect(self.clickBox)
+        self.glayout.addWidget(self.b);
+
+        self.jacktimeBox = QLineEdit(self)  
+        self.jacktimeBox.setReadOnly(1);
+        self.glayout.addWidget(self.jacktimeBox);
+        
         
         self.currencyButton =  QPushButton("Plot source(s)")
         self.glayout.addWidget(self.currencyButton)        
@@ -132,15 +149,14 @@ class OscPlayerMain(QMainWindow):
         global count
         
         self.Add(str(count))
+        
         count += 1
-  
+ 
     
-# button_clicked slot
-#    @pyqtSlot(QtGui.QAbstractButton)
-#    @pyqtSlot(int)
+    
     def button_clicked_1(self, button_or_id):
     
-#        print('"{}" was clicked'.format(button_or_id.text()))
+        print('"{}" was clicked for source '.format(button_or_id.text()) + self.tmpID.__str__())
              
         self.PlayerObjects[self.tmpID].ChangeState(button_or_id.text())
     
@@ -160,7 +176,7 @@ class OscPlayerMain(QMainWindow):
         
         global count
              
-        self.PlayerObjects.append(OscPlayer(count))
+        self.PlayerObjects.append(OscPlayer(count, self.textbox))
         
         l1 = QLabel()
         l1.setText("Source "+str(count))
@@ -211,6 +227,9 @@ class OscPlayerMain(QMainWindow):
         self.glayout.addWidget(option_2,2+yoff,count-xoff)        
         self.glayout.addWidget(option_3,3+yoff,count-xoff)
      
+        
+        self.textbox.clear();
+        
 ###############################################################################################
 # 
     def handlePlotButton(self):
@@ -226,6 +245,8 @@ class OscPlayerMain(QMainWindow):
             
         self.jack_client = jack.Client('osc-player')
         self.jack_client.activate();
+        
+        self.fs = self.jack_client.samplerate;
         
         #_thread.start_new_thread( JackTime, () )
          
@@ -301,7 +322,8 @@ class OscPlayerMain(QMainWindow):
 
 ###############################################################################################
 # 
-       
+    """ ACID """
+
     def JackClocker(self):
     
         print("starting jack")
@@ -310,16 +332,19 @@ class OscPlayerMain(QMainWindow):
                        
             self.jackPos = self.jack_client.transport_frame
             
+        
             
             if self.jackPos != self.last_jackPos:
 # 
-
+                Tsec = self.jackPos / self.fs;
+                
+                self.jacktimeBox.setText(Tsec.__str__());
+                
                 for i in self.PlayerObjects:
                                   
                     if i.state=="R":
                                             
-                        i.JackPosChange(self.jackPos, self.OSCout)
-                    
+                        i.JackPosChange(self.jackPos, self.OSCout)                    
                 
                 self.last_jackPos = self.jackPos;    
         

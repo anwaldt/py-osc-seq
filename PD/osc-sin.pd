@@ -19,14 +19,9 @@
 #X msg 672 678 /poll;
 #X msg 767 708 /source/position \$1 \$2 \$3 -1;
 #X msg 573 644 connect localhost 50001;
-#X obj 522 394 test-generator 9;
-#X obj 660 395 test-generator 10;
-#X obj 792 398 test-generator 11;
-#X obj 928 394 test-generator 12;
-#X obj 524 442 test-generator 13;
-#X obj 663 443 test-generator 14;
-#X obj 795 446 test-generator 15;
-#X obj 931 442 test-generator 16;
+#X obj 452 564 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 522 394 test-generator 1;
 #X connect 0 0 1 0;
 #X connect 3 0 0 0;
 #X connect 6 0 5 0;
@@ -38,6 +33,7 @@
 #X connect 15 0 3 0;
 #X connect 15 0 4 0;
 #X connect 15 0 18 0;
+#X connect 15 0 20 0;
 #X connect 16 0 14 0;
 #X connect 17 0 13 0;
 #X connect 18 0 13 0;

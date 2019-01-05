@@ -11,7 +11,7 @@ class OscPlayer:
     
 
     
-    def __init__(self, id):
+    def __init__(self, id, message):
     
         # states
         # 0 = off
@@ -24,11 +24,13 @@ class OscPlayer:
         self.t  = []
         self.x  = []
         self.y  = []
+        self.z  = []
     
     # recording buffers
         self.t_IN  = []
         self.x_IN  = []
         self.y_IN  = []
+        self.z_IN  = []
     
         self.ID = id
          
@@ -52,6 +54,9 @@ class OscPlayer:
         
     def JackPosChange(self, jackPos, osc_client):
    
+        
+        print('Jack position change reached source '+self.ID.__str__())
+        
         tmpIdx = np.argmin(np.abs( np.subtract(self.t , jackPos)))
                  
 
@@ -92,7 +97,9 @@ class OscPlayer:
 #         
 #        if msg=="W":
             
-        self.state=msg;
+        self.state = msg;
+        
+        print('CHANGED: '+ self.state)
 
     
                 
