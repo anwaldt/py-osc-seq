@@ -1,11 +1,12 @@
 
 import numpy as np
-import math
+import math 
+ 
 
 from OscConnect import OscSender
 from pythonosc import osc_message_builder as omb
 
-
+import csv
 
 class OscPlayer:	
     
@@ -28,6 +29,7 @@ class OscPlayer:
         self.z  = []
         
         self.values = []
+        self.paths  = []
         
         self.azim = []
         self.dist = []
@@ -38,6 +40,7 @@ class OscPlayer:
         self.x_IN  = []
         self.y_IN  = []
         self.z_IN  = []
+    
     
         self.ID = id
          
@@ -60,9 +63,17 @@ class OscPlayer:
         
        
        
+        with open(oscf, "r+") as f:
+            data = f.readlines()
+            for line in data:
+                
+                [d1, path, d2] =  line.split('\t')
+                self.paths.append(path)
+                 
+                
         print("datapoints: "+str(np.size(self.t)))
-      
  
+        
         
     def JackPosChange(self, jackPos, osc_client):
    
@@ -117,5 +128,4 @@ class OscPlayer:
 
     
                 
-    
-    
+     

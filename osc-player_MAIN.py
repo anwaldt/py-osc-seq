@@ -16,9 +16,7 @@ from pythonosc import osc_server
 from JackTime import JackTime
 
 from OscPlayer import OscPlayer
-
-from OscConnect import OscSender
-from OscConnect import OscServer
+ 
 
 from PlotWindow import PlotWindow
 
@@ -57,9 +55,7 @@ class OscPlayerMain(QMainWindow):
     
     
         self.fs = 0;
-    
-        self.OSCout = OscSender()
-        self.OSCin  = OscServer()
+   
 
          
 
@@ -68,6 +64,17 @@ class OscPlayerMain(QMainWindow):
  
         self.oscPath     = 0;
         
+        
+        
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--ip", default="127.0.0.1",
+                            help="The ip of the OSC server")
+        parser.add_argument("--port", type=int, default=5005,
+                            help="The port the OSC server is listening on")
+        args = parser.parse_args()
+
+        client = udp_client.SimpleUDPClient(args.ip, args.port)
+  
         
     def initUI(self):  
                 
@@ -347,7 +354,7 @@ class OscPlayerMain(QMainWindow):
                                   
                     if i.state=="R":
                                             
-                        i.JackPosChange(self.jackPos, self.OSCout)                    
+                        i.JackPosChange(self.jackPos)                    
                 
                 self.last_jackPos = self.jackPos;    
         
