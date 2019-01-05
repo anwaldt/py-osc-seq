@@ -6,7 +6,7 @@ received packets.
 import argparse
 import jack
 import os
-
+ 
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
@@ -34,32 +34,63 @@ def volume_handler(unused_addr, ch1, ch2, gain, timestamp):
     
 #------------------------------------------------------------------------------
 
-def position_handler(unused_addr, ID, x, y, timestamp):
-
-   
+def handler_cartesian_3D(unused_addr, ID, x, y, z, timestamp):
 
   tmpName = args.outpath + "pos" + str(ID) + ".osc";
   
   f       = open(tmpName, 'a')
-  f.write("position")
+  f.write("/position/cartesian")
   f.write("\t")
   #f.write(str(timestamp))
+
   f.write(str(client.transport_frame))
   f.write("\t")
+
   f.write(str(ID))
   f.write("\t")
+
   f.write(str(x))
   f.write("\t")
+
   f.write(str(y))
   f.write("\n")
+
+  f.write(str(z))
+  f.write("\n")
+    
+#------------------------------------------------------------------------------
+
+  
+def handler_polar_single(unused_addr, value):
+    #
+    """ Designed to process PanoramixApp messages. """
+    
+    [o, t, i, p] = unused_addr.split("/")
+    
+    tmpName = "track_"+str(i)+'_'+str(p)+".out";
+    f       = open(args.outpath + tmpName, 'a')
+
+    timeStamp = client.transport_frame / client.samplerate;
+
+    f.write(str(timeStamp))
+    f.write("\t")
+
+    f.write(unused_addr)
+    f.write("\t")
+  
+    f.write(str(value))
+    f.write("\n")
+
     
 ##############################################################################
 ##############################################################################
-  
+    
+    
 if __name__ == "__main__":
     
      
   client = jack.Client('osc-recorder')
+
   client.activate();
   
   #client.inports.register('input_1')
@@ -81,13 +112,23 @@ if __name__ == "__main__":
   
   dispatcher.map("/gain/", volume_handler )
   
-  dispatcher.map("/source/position", position_handler )
+  dispatcher.map("/source/position", handler_cartesian_3D )
   
-  server = osc_server.ThreadingOSCUDPServer(
-      (args.ip, args.port), dispatcher)
+  for i in range(1,64):
+      
+      tmpStr = "/track/"+str(i)+"/azim"
+      dispatcher.map(tmpStr, handler_polar_single)
+    
+      tmpStr = "/track/"+str(i)+"/dist"
+      dispatcher.map(tmpStr, handler_polar_single)
+      
+      tmpStr = "/track/"+str(i)+"/elev"
+      dispatcher.map(tmpStr, handler_polar_single)
+      
+  
+  server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dispatcher)
   print("Serving on {}".format(server.server_address))
-  
-  
+    
   positions = []
   
   server.serve_forever()

@@ -43,8 +43,7 @@ class OscPlayerMain(QMainWindow):
     """ The main OSC player tning """
     
     glayout = QGridLayout()
-    
-    
+        
     def __init__(self):
         
         super().__init__()
@@ -69,9 +68,9 @@ class OscPlayerMain(QMainWindow):
  
         self.oscPath     = 0;
         
+        
     def initUI(self):  
-        
-        
+                
         #--------- MENU --------------------------------------------------
 
  
@@ -172,14 +171,14 @@ class OscPlayerMain(QMainWindow):
 # method for adding a source, including gui elements        
     
     
-    def Add(self, oscFile):
+    def Add(self, oscFile, label):
         
         global count
              
         self.PlayerObjects.append(OscPlayer(count, self.textbox))
         
         l1 = QLabel()
-        l1.setText("Source "+str(count))
+        l1.setText(label)
    
          # radiobuttons
         option_1 = QRadioButton('OFF')
@@ -283,7 +282,10 @@ class OscPlayerMain(QMainWindow):
             print(oscFile)
             print(str(count))
             
-            self.Add(count);
+            
+            [label, j] = f.split(".")
+            
+            self.Add(count, label);
             
             count += 1
 
@@ -294,6 +296,7 @@ class OscPlayerMain(QMainWindow):
         for f in oscFiles:
                 
             self.PlayerObjects[count].LoadFile(self.oscPath+"/"+f)
+            
             count +=1
 
 ###############################################################################################

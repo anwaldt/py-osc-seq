@@ -20,11 +20,18 @@ class OscPlayer:
         
         self.state = "OFF";
     
+        self.message = message;
     
         self.t  = []
         self.x  = []
         self.y  = []
         self.z  = []
+        
+        self.values = []
+        
+        self.azim = []
+        self.dist = []
+        self.elev = []
     
     # recording buffers
         self.t_IN  = []
@@ -41,13 +48,18 @@ class OscPlayer:
          
         print("Loading data from: ".__add__(oscf))
             
-        positions  = np.loadtxt(oscf, delimiter='\t', usecols=(1,2,3,4))
-    
-        self.t = positions[:,0]
-        #self.tID.append(positions[:,1])
-        self.x = positions[:,2]
-        self.y = positions[:,3]
+        data  = np.loadtxt(oscf, delimiter='\t', usecols=(0,2))
+  
+        self.t      = data[:,0]
+#        self.paths.append(data[:,1])
+        self.values = data[:,1]
+
+       # #self.tID.append(data[:,1])
+       # self.x = data[:,2]
+       # self.y = data[:,3]
         
+       
+       
         print("datapoints: "+str(np.size(self.t)))
       
  
@@ -56,6 +68,8 @@ class OscPlayer:
    
         
         print('Jack position change reached source '+self.ID.__str__())
+        
+        
         
         tmpIdx = np.argmin(np.abs( np.subtract(self.t , jackPos)))
                  
@@ -68,9 +82,9 @@ class OscPlayer:
         
    
         
-        r = np.sqrt(X*X+Y*Y)
+       # r = np.sqrt(X*X+Y*Y)
         
-        azimuth = np.tanh(Y/X)*(180/math.pi)
+       # azimuth = np.tanh(Y/X)*(180/math.pi)
         
         
         msg = omb.OscMessageBuilder(address="/track/"+str(self.ID)+"/azim")        
