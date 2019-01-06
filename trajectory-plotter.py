@@ -49,8 +49,18 @@ def plot_apmlitudes(sourceID):
 # PLOT Amplitudes
 ########################################################################################
 
-def plot_position_xy(sourceID,startIDX,stopIDX):
+def plot_position_xy(file, startIDX,stopIDX):
+
+    print("Plotting x-y for: "+file)         
+    positions   = np.loadtxt(posFile, delimiter='\t', usecols=(0,2,3,4,5))
         
+    newAR       = positions;   
+    #newAR = newAR[startIDX:stopIDX,:]    
+
+    # N = len(newAR)
+    
+    #plot_position_xy(2,-1,-1)
+    
     mpl.style.use('default')
     fig, ax1 = mpl.subplots()
     
@@ -65,7 +75,7 @@ def plot_position_xy(sourceID,startIDX,stopIDX):
         
    #     ax1.plot(newAR[i:i+2,2], newAR[i:i+2,3], linewidth=0.75, color= mpl.cm.jet(colIDX))
         
-    ax1.plot(newAR[startIDX:stopIDX,2], newAR[startIDX:stopIDX,3], linewidth=0.75)
+    ax1.plot(newAR[:,2], newAR[:,3], linewidth=0.75)
     
    # ax1.plot(newAR[startIDX:stopIDX,0], newAR[startIDX:stopIDX,3], linewidth=0.75)
     
@@ -123,14 +133,5 @@ if __name__ == "__main__":
 
 
     posFile     = args.infile
-    
-    positions   = np.loadtxt(posFile, delimiter='\t', usecols=(1,2,3,4))
 
-    newAR       = positions;   
-    #newAR = newAR[startIDX:stopIDX,:]    
-
-    N = len(newAR)
-    
-    #plot_position_xy(2,-1,-1)
-
-    plot_position_X(newAR, -1,-1)
+    plot_position_xy(posFile, -1,-1)

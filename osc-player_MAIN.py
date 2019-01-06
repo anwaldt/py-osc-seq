@@ -19,7 +19,6 @@ from JackTime import JackTime
 
 from OscPlayer import OscPlayer
  
-
 from PlotWindow import PlotWindow
 
 import sys
@@ -58,12 +57,8 @@ class OscPlayerMain(QMainWindow):
     
     
         self.fs = 0;
-   
-
-         
-
+    
         self.PlayerObjects = []
-
  
         self.oscPath     = 0;
                 
@@ -138,7 +133,6 @@ class OscPlayerMain(QMainWindow):
         self.currencyButton.clicked.connect(self.handlePlotButton)    
 
         self.PLOTBox = QLineEdit(self)  
-        self.PLOTBox.setReadOnly(1);
         self.glayout.addWidget(self.PLOTBox);
         
         self.offButton =  QPushButton("ALL OFF!")
@@ -267,7 +261,14 @@ class OscPlayerMain(QMainWindow):
 ###############################################################################################
 # 
     def handlePlotButton(self):
+        
+        print("Plotting trayjectory No: "+self.PLOTBox.text())
+
+        player = self.PlayerObjects[int(self.PLOTBox.text())]
         window = PlotWindow(self)
+        
+        window.set_data(player)
+        
         window.show()
 
 
@@ -275,8 +276,7 @@ class OscPlayerMain(QMainWindow):
 # 
         
     def handleJackConnect(self):        
-    
-            
+                
         self.jack_client = jack.Client('osc-player')
         self.jack_client.activate();
         
@@ -394,11 +394,7 @@ class OscPlayerMain(QMainWindow):
 
 ###############################################################################################
 # 
-            
-
-
-
-
+   
 if __name__ == "__main__":
     
 
