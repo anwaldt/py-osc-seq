@@ -113,7 +113,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()        
     parser.add_argument("--infile",
-                      default ="pos-1",help="filename for plot")
+                      help="filename for plot")
+    
+    parser.add_argument("--p1")
+    parser.add_argument("--p2")
+    
     
     args = parser.parse_args()
 

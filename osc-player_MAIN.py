@@ -28,12 +28,13 @@ from PyQt5.QtCore import Qt
 
 from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QCheckBox, QLineEdit)
 
-from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider,
+from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider, 
         QMenu, QPushButton, QRadioButton, QVBoxLayout,QHBoxLayout, QWidget, QButtonGroup, QAbstractButton, QLabel)
 
 
-from PyQt5.QtGui import (QIcon)
+from PyQt5.QtGui import (QIcon, QPixmap)
 
+ 
 
 count = 1
 
@@ -72,6 +73,14 @@ class OscPlayerMain(QMainWindow):
         
     def initUI(self):  
                 
+        
+        self.setWindowIcon(QIcon('TU-Berlin-Logo.svg'))
+        
+        
+        
+    # Optional, resize window to image size
+     
+        
         #--------- MENU --------------------------------------------------
 
  
@@ -104,6 +113,7 @@ class OscPlayerMain(QMainWindow):
         self.glayout.addWidget(pBut)        
         pBut.clicked.connect(self.handleAddButton)
 
+ 
 
         self.textbox = QLineEdit(self)        
         self.glayout.addWidget(self.textbox);
@@ -127,7 +137,17 @@ class OscPlayerMain(QMainWindow):
         self.glayout.addWidget(self.currencyButton)        
         self.currencyButton.clicked.connect(self.handlePlotButton)    
 
+        self.PLOTBox = QLineEdit(self)  
+        self.PLOTBox.setReadOnly(1);
+        self.glayout.addWidget(self.PLOTBox);
+        
+        self.offButton =  QPushButton("ALL OFF!")
+        self.glayout.addWidget(self.offButton)        
+        self.offButton.clicked.connect(self.handleAllOFF)    
 
+        self.readButton =  QPushButton("ALL READ!")
+        self.glayout.addWidget(self.readButton)        
+        self.readButton.clicked.connect(self.handleAllR)    
         #--------- window setup --------------------------------------------------
 
     
@@ -136,13 +156,26 @@ class OscPlayerMain(QMainWindow):
 
             
         self.setGeometry(300, 300, 350, 300)
-        self.setWindowTitle('PYROscp')
+        self.setWindowTitle('OSCollect')
         self.show()
         wid.setLayout(self.glayout)
 
 
 ###############################################################################################
 # 
+        
+    def handleAllOFF(self):
+        
+        for i in self.PlayerObjects:
+            
+            i.state = "OFF"
+            
+    def handleAllR(self):
+        
+        for i in self.PlayerObjects:
+            
+            i.state = "R"        
+            
         
     def handleAddButton(self):
         
@@ -230,6 +263,7 @@ class OscPlayerMain(QMainWindow):
         
         self.textbox.clear();
         
+         
 ###############################################################################################
 # 
     def handlePlotButton(self):
