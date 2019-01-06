@@ -33,8 +33,7 @@ class PlotWindow(QDialog):
     def __init__(self, parent=None):
         
         super(PlotWindow, self).__init__(parent)
-        
-        
+                
         # a figure instance to plot on
         self.figure = plt.figure()
 
@@ -62,29 +61,33 @@ class PlotWindow(QDialog):
     def set_data(self, player):
         
         self.player = player
+        
         print(player.mainPath)
+        
+        self.setWindowTitle(player.mainPath)
         
         self.plot()
         
+                
         
     def plot(self):
         
         ''' plot some random stuff '''
         # random data
         data = self.player.values
-
+        
         # instead of ax.hold(False)
         self.figure.clear()
 
         # create an axis
         ax = self.figure.add_subplot(111)
 
-        # discards the old graph
-        # ax.hold(False) # deprecated, see above
 
         # plot data
-        ax.plot(data)
+        ax.plot(self.player.t, data)
 
+        ax.set_xlabel('t / s')
+        
         # refresh canvas
         self.canvas.draw()        
         
