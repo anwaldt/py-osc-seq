@@ -11,11 +11,8 @@ from pythonosc import dispatcher
 from pythonosc import osc_server
 
 
-
-  ##############################################################################
-  ##############################################################################
-  
-
+##############################################################################
+##############################################################################
 
 def volume_handler(unused_addr, ch1, ch2, gain, timestamp):
     
@@ -34,32 +31,33 @@ def volume_handler(unused_addr, ch1, ch2, gain, timestamp):
     
 #------------------------------------------------------------------------------
 
-def handler_cartesian_3D(unused_addr, ID, x, y, z, timestamp):
+def handler_wonder(unused_addr, ID, x, y, duration):
 
-  tmpName = args.outpath + "pos" + str(ID) + ".osc";
+  tmpName = args.outpath + "WONDER_" + str(ID) + "_cartesian" + ".osc";
   
   f       = open(tmpName, 'a')
-  f.write("/position/cartesian")
-  f.write("\t")
-  #f.write(str(timestamp))
+  
+  timeStamp = client.transport_frame / client.samplerate;
 
-  f.write(str(client.transport_frame))
+  f.write('%.4f' % (timeStamp))
   f.write("\t")
 
+  f.write(unused_addr)
+  f.write("\t")
+  
   f.write(str(ID))
   f.write("\t")
 
-  f.write(str(x))
+  f.write('%.4f' % (x))
   f.write("\t")
 
-  f.write(str(y))
-  f.write("\n")
+  f.write('%.4f' % (y))
+  f.write("\t")
 
-  f.write(str(z))
+  f.write('%.4f' % (duration))
   f.write("\n")
     
 #------------------------------------------------------------------------------
-
   
 def handler_polar_single(unused_addr, value):
     #
@@ -67,12 +65,12 @@ def handler_polar_single(unused_addr, value):
     
     [o, t, i, p] = unused_addr.split("/")
     
-    tmpName = "track_"+str(i)+'_'+str(p)+".out";
+    tmpName = "track_"+str(i)+'_'+str(p)+".osc";
     f       = open(args.outpath + tmpName, 'a')
 
     timeStamp = client.transport_frame / client.samplerate;
 
-    f.write(str(timeStamp))
+    f.write('%.4f' % (timeStamp))
     f.write("\t")
 
     f.write(unused_addr)
@@ -112,7 +110,7 @@ if __name__ == "__main__":
   
   dispatcher.map("/gain/", volume_handler )
   
-  dispatcher.map("/source/position", handler_cartesian_3D )
+  dispatcher.map("/WONDER/source/position", handler_wonder )
   
   for i in range(1,64):
       

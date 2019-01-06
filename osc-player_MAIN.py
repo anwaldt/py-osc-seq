@@ -11,6 +11,8 @@ from os.path import isfile, join
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
+from pythonosc import udp_client
+from pythonosc import osc_message_builder as omb
 
 
 from JackTime import JackTime
@@ -63,18 +65,10 @@ class OscPlayerMain(QMainWindow):
 
  
         self.oscPath     = 0;
-        
-        
-        
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--ip", default="127.0.0.1",
-                            help="The ip of the OSC server")
-        parser.add_argument("--port", type=int, default=5005,
-                            help="The port the OSC server is listening on")
-        args = parser.parse_args()
+                
+        self.panoramixOSCclient = udp_client.SimpleUDPClient("127.0.0.1", 4002)        
+        self.wonderOSCclient    = udp_client.SimpleUDPClient("127.0.0.1", 4008)
 
-        client = udp_client.SimpleUDPClient(args.ip, args.port)
-  
         
     def initUI(self):  
                 
@@ -182,7 +176,7 @@ class OscPlayerMain(QMainWindow):
         
         global count
              
-        self.PlayerObjects.append(OscPlayer(count, self.textbox))
+        self.PlayerObjects.append(OscPlayer(count, label))
         
         l1 = QLabel()
         l1.setText(label)
@@ -287,6 +281,7 @@ class OscPlayerMain(QMainWindow):
             oscFile = self.oscPath.__add__("/").__add__(f);
             
             print(oscFile)
+            
             print(str(count))
             
             
@@ -336,26 +331,28 @@ class OscPlayerMain(QMainWindow):
 
     def JackClocker(self):
     
-        print("starting jack")
+        print("Connecting to Jack server!")
 
         while 1:
                        
             self.jackPos = self.jack_client.transport_frame
-            
-        
-            
+                        
             if self.jackPos != self.last_jackPos:
 # 
                 Tsec = self.jackPos / self.fs;
                 
-                self.jacktimeBox.setText(Tsec.__str__());
+                self.jacktimeBox.setText('%.2f' % (Tsec));
                 
                 for i in self.PlayerObjects:
                                   
                     if i.state=="R":
-                                            
-                        i.JackPosChange(self.jackPos)                    
-                
+ 
+                        if i.mainPath == 'track':
+                            i.JackPosChange(Tsec, self.panoramixOSCclient)    
+                        
+                        elif i.mainPath == 'WONDER':
+                            i.JackPosChange(Tsec, self.wonderOSCclient)
+                        
                 self.last_jackPos = self.jackPos;    
         
             time.sleep(0.002)          
