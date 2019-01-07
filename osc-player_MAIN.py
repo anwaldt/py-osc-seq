@@ -69,7 +69,7 @@ class OscPlayerMain(QMainWindow):
     def initUI(self):  
                 
         
-        self.setWindowIcon(QIcon('TU-Berlin-Logo.svg'))
+        self.setWindowIcon(QIcon('graphics/TU-Berlin-Logo.svg'))
         
         
         
