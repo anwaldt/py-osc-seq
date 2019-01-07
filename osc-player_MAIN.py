@@ -63,7 +63,7 @@ class OscPlayerMain(QMainWindow):
         self.oscPath     = 0;
                 
         self.panoramixOSCclient = udp_client.SimpleUDPClient("127.0.0.1", 4002)        
-        self.wonderOSCclient    = udp_client.SimpleUDPClient("127.0.0.1", 4008)
+        self.wonderOSCclient    = udp_client.SimpleUDPClient("192.168.3.1", 58100)
 
         
     def initUI(self):  
