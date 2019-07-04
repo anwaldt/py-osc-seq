@@ -21,6 +21,10 @@ from OscPlayer import OscPlayer
  
 from PlotWindow import PlotWindow
 
+from OscRecorder import OscRecorder
+
+from RecorderWindow import RecorderWindow
+
 import sys
 
 from PyQt5.QtCore import Qt
@@ -59,7 +63,9 @@ class OscPlayerMain(QMainWindow):
         self.fs = 0;
     
         self.PlayerObjects = []
- 
+     
+        self.RecorderObjects = []
+        
         self.oscPath     = 0;
                 
         self.panoramixOSCclient = udp_client.SimpleUDPClient("127.0.0.1", 4002)        
@@ -67,13 +73,10 @@ class OscPlayerMain(QMainWindow):
 
         
     def initUI(self):  
-                
         
         self.setWindowIcon(QIcon('graphics/TU-Berlin-Logo.svg'))
         
-        
-        
-    # Optional, resize window to image size
+        # Optional, resize window to image size
      
         
         #--------- MENU --------------------------------------------------
@@ -93,12 +96,28 @@ class OscPlayerMain(QMainWindow):
         newDirectory.triggered.connect(self.newProject)
 
     
+        newRecorder = QAction(QIcon('open.png'), 'New recorder', self)
+        newRecorder.setShortcut('Ctrl+R')
+        newRecorder.setStatusTip('Start a new OSC recorder')
+        newRecorder.triggered.connect(self.newRecoder)
+        
+
+        listRecorders = QAction(QIcon('open.png'), 'Show all recorders', self)
+        listRecorders.setShortcut('Ctrl+A')
+        listRecorders.setStatusTip('')
+        listRecorders.triggered.connect(self.newRecoder)
+        
+
 
         menubar = self.menuBar()
         
         fileMenu = menubar.addMenu('&Project')
         fileMenu.addAction(openDirectory)       
         fileMenu.addAction(newDirectory)      
+        
+        
+        recoderMenu = menubar.addMenu('&Recorder')
+        recoderMenu.addAction(newRecorder)       
         
     
         #--------- BUTTONS on left  --------------------------------------------------
@@ -346,6 +365,28 @@ class OscPlayerMain(QMainWindow):
             self.oscPath = fname[0], 'r' 
                 
                
+
+
+
+###############################################################################################
+#  
+
+    def newRecoder(self):
+
+        #print("Plotting trayjectory No: "+self.PLOTBox.text())
+
+        window = RecorderWindow(self)
+
+        recorder = OscRecorder()
+        
+        self.RecorderObjects.append(recorder)  
+        
+        window.set_data(recorder)
+        
+        window.show()
+
+               
+
 
 ###############################################################################################
 # 

@@ -12,7 +12,6 @@ import os
 from pythonosc import dispatcher
 from pythonosc import osc_server
 
-from typing import List, Any
 
 ##############################################################################
 ##############################################################################
@@ -83,36 +82,6 @@ def handler_polar_single(unused_addr, value):
     f.write("\n")
 
 
-#------------------------------------------------------------------------------
-  
-def generic_handler(unused_addr, *oscArgs: List[Any]):
-    """Generic handler for all OSC paths (addresses)."""
-    
-    fileString = unused_addr.replace('/','_')
-    
-    n_arguments = len(oscArgs)
-    
-    f = open(args.outpath + fileString, 'a')
-
-    timeStamp = client.transport_frame / client.samplerate;
-        
-    f.write('%.4f' % (timeStamp))    
-    f.write("\t")
-
-    f.write(unused_addr)       
-        
-    for i in range(n_arguments):
-
-        f.write("\t")
-        
-        tmpArg = oscArgs[i]
-        
-        print(type(tmpArg))
-  
-        f.write(str(tmpArg))
-        
-        
-    f.write("\n")
         
 ##############################################################################
 ##############################################################################
@@ -141,9 +110,7 @@ if __name__ == "__main__":
     
   
   dispatcher = dispatcher.Dispatcher()  
-  
-  dispatcher.map("/*", generic_handler)
-  
+    
   dispatcher.map("/gain/", volume_handler )
   
   dispatcher.map("/WONDER/source/position", handler_wonder )
