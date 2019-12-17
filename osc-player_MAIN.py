@@ -68,8 +68,8 @@ class OscPlayerMain(QMainWindow):
         
         self.oscPath     = 0;
                 
-        self.panoramixOSCclient = udp_client.SimpleUDPClient("127.0.0.1", 4002)        
-        self.wonderOSCclient    = udp_client.SimpleUDPClient("192.168.3.1", 58100)
+        self.osc_client = udp_client.SimpleUDPClient("127.0.0.1", 7777)        
+ 
 
         
     def initUI(self):  
@@ -421,12 +421,8 @@ class OscPlayerMain(QMainWindow):
                 for i in self.PlayerObjects:
                                   
                     if i.state=="R":
- 
-                        if i.mainPath == 'track':
-                            i.JackPosChange(Tsec, self.panoramixOSCclient)    
-                        
-                        elif i.mainPath == 'WONDER':
-                            i.JackPosChange(Tsec, self.wonderOSCclient)
+                          
+                            i.JackPosChange(Tsec, self.osc_client)                            
                         
                 self.last_jackPos = self.jackPos;    
         

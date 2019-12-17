@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-"""OSC Recorder for writing any """
+
+""" OSC Recorder for writing any incoming massages to text files!"""
 
 __author__ = "Henrik von Coler"
 __date__   = "2019-06-07"
@@ -164,6 +165,7 @@ if __name__ == "__main__":
 #      
   
   server = osc_server.ThreadingOSCUDPServer((args.ip, args.port), dispatcher)
+  
   print("Serving on {}".format(server.server_address))
     
   positions = []

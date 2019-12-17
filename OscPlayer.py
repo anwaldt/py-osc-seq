@@ -51,46 +51,46 @@ class OscPlayer:
         
         self.OscFile = oscf         
         print("Loading data from: ".__add__(oscf))
-
-
-        if self.mainPath == 'track':
             
-            data  = np.loadtxt(oscf, delimiter='\t', usecols=(0,2))
-      
-            self.t      = data[:,0]
-    #        self.paths.append(data[:,1])
-            self.values = data[:,1]
-    
-           # #self.tID.append(data[:,1])
-           # self.x = data[:,2]
-           # self.y = data[:,3]
-            
-           
-           
-            with open(oscf, "r+") as f:
-                data = f.readlines()
-                for line in data:
-                    
-                    [d1, path, d2] =  line.split('\t')
-                    self.paths.append(path)
-                 
-            
-        elif self.mainPath == 'WONDER':
-            
-            with open(oscf, "r+") as f:
-                data = f.readlines()
-                for line in data:
-                    
-                    l =  line.split('\t')
-                    self.paths.append(l[1])
-                    
-            data  = np.loadtxt(oscf, delimiter='\t', usecols=(0,2,3,4,5))        
+        data  = np.loadtxt(oscf, delimiter='\t', usecols=(0,2))
+  
+        self.t      = data[:,0]
         
-            self.t  = data[:,0]
-            self.id = data[:,1]
-            self.x  = data[:,2]
-            self.y  = data[:,3]
-            self.dt = data[:,4]
+        
+#        self.paths.append(data[:,1])
+        self.values = data[:,1]
+
+       # #self.tID.append(data[:,1])
+       # self.x = data[:,2]
+       # self.y = data[:,3]
+        
+       
+        self.t_start = self.t[0]
+       
+       
+        
+        
+        with open(oscf, "r+") as f:
+            
+            data = f.readlines()
+            
+            count = 0
+            
+            for line in data:
+                
+                [d1, path, d2] =  line.split('\t')
+                self.paths.append(path)
+                
+                 
+                self.t[count] =  self.t[count]-self.t_start
+
+
+                print(self.t[count])
+                
+                count+=1
+
+                 
+    
         
         print("datapoints: "+str(np.size(self.t)))
  
@@ -122,18 +122,15 @@ class OscPlayer:
     
         msg = omb.OscMessageBuilder(address=outPath)  
 
-        if self.mainPath == 'track':
+        
             
-            outVal  = self.values[tmpIdx]                              
-            msg.add_arg(outVal)          
+        
+        outVal  = self.values[tmpIdx]                              
+            
+        msg.add_arg(outVal)          
 
-        elif self.mainPath == 'WONDER':
-            
-            msg.add_arg(self.id[tmpIdx])       
-            msg.add_arg(self.x[tmpIdx])       
-            msg.add_arg(self.y[tmpIdx])       
-            msg.add_arg(self.dt[tmpIdx])       
-            
+         
+      
 
         msg     = msg.build()
         osc_client.send(msg)
