@@ -11,38 +11,43 @@ from os.path import isfile, join
 
 from pythonosc import dispatcher
 from pythonosc import osc_server
+from pythonosc import udp_client
+from pythonosc import osc_message_builder as omb
 
 
 from JackTime import JackTime
 
 from OscPlayer import OscPlayer
-
-from OscConnect import OscSender
-from OscConnect import OscServer
-
+ 
 from PlotWindow import PlotWindow
+
+from OscRecorder import OscRecorder
+
+from RecorderWindow import RecorderWindow
 
 import sys
 
 from PyQt5.QtCore import Qt
 
-from PyQt5.QtWidgets import (QMainWindow,     QAction, QFileDialog)
+from PyQt5.QtWidgets import (QMainWindow, QAction, QFileDialog, QCheckBox, QLineEdit)
 
-from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider,
+from PyQt5.QtWidgets import (QApplication, QGridLayout, QGroupBox,QDialog, QSlider, 
         QMenu, QPushButton, QRadioButton, QVBoxLayout,QHBoxLayout, QWidget, QButtonGroup, QAbstractButton, QLabel)
 
 
-from PyQt5.QtGui import (QIcon)
+from PyQt5.QtGui import (QIcon, QPixmap)
 
+ 
 
 count = 1
 
 
 class OscPlayerMain(QMainWindow):
     
+    """ The main OSC player tning """
+    
     glayout = QGridLayout()
-    
-    
+        
     def __init__(self):
         
         super().__init__()
@@ -55,19 +60,24 @@ class OscPlayerMain(QMainWindow):
         self.last_jackPos = 0
     
     
+        self.fs = 0;
     
-        self.OSCout = OscSender()
-        self.OSCin  = OscServer()
-
-         
-
         self.PlayerObjects = []
-
- 
+     
+        self.RecorderObjects = []
+        
         self.oscPath     = 0;
+                
+        self.osc_client = udp_client.SimpleUDPClient("127.0.0.1", 7777)        
+ 
+
         
     def initUI(self):  
         
+        self.setWindowIcon(QIcon('graphics/TU-Berlin-Logo.svg'))
+        
+        # Optional, resize window to image size
+     
         
         #--------- MENU --------------------------------------------------
 
@@ -86,6 +96,18 @@ class OscPlayerMain(QMainWindow):
         newDirectory.triggered.connect(self.newProject)
 
     
+        newRecorder = QAction(QIcon('open.png'), 'New recorder', self)
+        newRecorder.setShortcut('Ctrl+R')
+        newRecorder.setStatusTip('Start a new OSC recorder')
+        newRecorder.triggered.connect(self.newRecoder)
+        
+
+        listRecorders = QAction(QIcon('open.png'), 'Show all recorders', self)
+        listRecorders.setShortcut('Ctrl+A')
+        listRecorders.setStatusTip('')
+        listRecorders.triggered.connect(self.newRecoder)
+        
+
 
         menubar = self.menuBar()
         
@@ -93,24 +115,52 @@ class OscPlayerMain(QMainWindow):
         fileMenu.addAction(openDirectory)       
         fileMenu.addAction(newDirectory)      
         
+        
+        recoderMenu = menubar.addMenu('&Recorder')
+        recoderMenu.addAction(newRecorder)       
+        
     
-        #--------- BUTTONS --------------------------------------------------
+        #--------- BUTTONS on left  --------------------------------------------------
 
 
         pBut =  QPushButton("Add Source")
         self.glayout.addWidget(pBut)        
         pBut.clicked.connect(self.handleAddButton)
 
+ 
+
+        self.textbox = QLineEdit(self)        
+        self.glayout.addWidget(self.textbox);
+        
 
         jBut = QPushButton("Connect to Jack")
         self.glayout.addWidget(jBut)
         jBut.clicked.connect(self.handleJackConnect)
         
+        
+        self.b = QCheckBox("Connected?")
+        #self.b.stateChanged.connect(self.clickBox)
+        self.glayout.addWidget(self.b);
+
+        self.jacktimeBox = QLineEdit(self)  
+        self.jacktimeBox.setReadOnly(1);
+        self.glayout.addWidget(self.jacktimeBox);
+        
+        
         self.currencyButton =  QPushButton("Plot source(s)")
         self.glayout.addWidget(self.currencyButton)        
         self.currencyButton.clicked.connect(self.handlePlotButton)    
 
+        self.PLOTBox = QLineEdit(self)  
+        self.glayout.addWidget(self.PLOTBox);
+        
+        self.offButton =  QPushButton("ALL OFF!")
+        self.glayout.addWidget(self.offButton)        
+        self.offButton.clicked.connect(self.handleAllOFF)    
 
+        self.readButton =  QPushButton("ALL READ!")
+        self.glayout.addWidget(self.readButton)        
+        self.readButton.clicked.connect(self.handleAllR)    
         #--------- window setup --------------------------------------------------
 
     
@@ -119,7 +169,7 @@ class OscPlayerMain(QMainWindow):
 
             
         self.setGeometry(300, 300, 350, 300)
-        self.setWindowTitle('PYROscp')
+        self.setWindowTitle('OSCollect')
         self.show()
         wid.setLayout(self.glayout)
 
@@ -127,20 +177,32 @@ class OscPlayerMain(QMainWindow):
 ###############################################################################################
 # 
         
+    def handleAllOFF(self):
+        
+        for i in self.PlayerObjects:
+            
+            i.state = "OFF"
+            
+    def handleAllR(self):
+        
+        for i in self.PlayerObjects:
+            
+            i.state = "R"        
+            
+        
     def handleAddButton(self):
         
         global count
         
         self.Add(str(count))
+        
         count += 1
-  
+ 
     
-# button_clicked slot
-#    @pyqtSlot(QtGui.QAbstractButton)
-#    @pyqtSlot(int)
+    
     def button_clicked_1(self, button_or_id):
     
-#        print('"{}" was clicked'.format(button_or_id.text()))
+        print('"{}" was clicked for source '.format(button_or_id.text()) + self.tmpID.__str__())
              
         self.PlayerObjects[self.tmpID].ChangeState(button_or_id.text())
     
@@ -156,14 +218,14 @@ class OscPlayerMain(QMainWindow):
 # method for adding a source, including gui elements        
     
     
-    def Add(self, oscFile):
+    def Add(self, oscFile, label):
         
         global count
              
-        self.PlayerObjects.append(OscPlayer(count))
+        self.PlayerObjects.append(OscPlayer(count, label))
         
         l1 = QLabel()
-        l1.setText("Source "+str(count))
+        l1.setText(label)
    
          # radiobuttons
         option_1 = QRadioButton('OFF')
@@ -211,10 +273,21 @@ class OscPlayerMain(QMainWindow):
         self.glayout.addWidget(option_2,2+yoff,count-xoff)        
         self.glayout.addWidget(option_3,3+yoff,count-xoff)
      
+        
+        self.textbox.clear();
+        
+         
 ###############################################################################################
 # 
     def handlePlotButton(self):
+        
+        print("Plotting trayjectory No: "+self.PLOTBox.text())
+
+        player = self.PlayerObjects[int(self.PLOTBox.text())]
         window = PlotWindow(self)
+        
+        window.set_data(player)
+        
         window.show()
 
 
@@ -222,10 +295,11 @@ class OscPlayerMain(QMainWindow):
 # 
         
     def handleJackConnect(self):        
-    
-            
+                
         self.jack_client = jack.Client('osc-player')
         self.jack_client.activate();
+        
+        self.fs = self.jack_client.samplerate;
         
         #_thread.start_new_thread( JackTime, () )
          
@@ -260,9 +334,13 @@ class OscPlayerMain(QMainWindow):
             oscFile = self.oscPath.__add__("/").__add__(f);
             
             print(oscFile)
+            
             print(str(count))
             
-            self.Add(count);
+            
+            [label, j] = f.split(".")
+            
+            self.Add(count, label);
             
             count += 1
 
@@ -273,6 +351,7 @@ class OscPlayerMain(QMainWindow):
         for f in oscFiles:
                 
             self.PlayerObjects[count].LoadFile(self.oscPath+"/"+f)
+            
             count +=1
 
 ###############################################################################################
@@ -286,6 +365,28 @@ class OscPlayerMain(QMainWindow):
             self.oscPath = fname[0], 'r' 
                 
                
+
+
+
+###############################################################################################
+#  
+
+    def newRecoder(self):
+
+        #print("Plotting trayjectory No: "+self.PLOTBox.text())
+
+        window = RecorderWindow(self)
+
+        recorder = OscRecorder()
+        
+        self.RecorderObjects.append(recorder)  
+        
+        window.set_data(recorder)
+        
+        window.show()
+
+               
+
 
 ###############################################################################################
 # 
@@ -301,26 +402,28 @@ class OscPlayerMain(QMainWindow):
 
 ###############################################################################################
 # 
-       
+    """ ACID """
+
     def JackClocker(self):
     
-        print("starting jack")
+        print("Connecting to Jack server!")
 
         while 1:
                        
             self.jackPos = self.jack_client.transport_frame
-            
-            
+                        
             if self.jackPos != self.last_jackPos:
 # 
-
+                Tsec = self.jackPos / self.fs;
+                
+                self.jacktimeBox.setText('%.2f' % (Tsec));
+                
                 for i in self.PlayerObjects:
                                   
                     if i.state=="R":
-                                            
-                        i.JackPosChange(self.jackPos, self.OSCout)
-                    
-                
+                          
+                            i.JackPosChange(Tsec, self.osc_client)                            
+                        
                 self.last_jackPos = self.jackPos;    
         
             time.sleep(0.002)          
@@ -328,11 +431,7 @@ class OscPlayerMain(QMainWindow):
 
 ###############################################################################################
 # 
-            
-
-
-
-
+   
 if __name__ == "__main__":
     
 
