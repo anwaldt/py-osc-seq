@@ -1,5 +1,6 @@
 #!/usr/bin/python3
-"""OSC Recorder for writing any """
+""" OSC Recorder class for writing arbitrary messages 
+to text files """
 
 __author__ = "Henrik von Coler"
 __date__   = "2019-06-07"
