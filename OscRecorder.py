@@ -51,7 +51,7 @@ class OscRecorder:
          
          self.dispatcher.map("/timer", self.external_time_handler)
   
-         self.server = osc_server.ThreadingOSCUDPServer((self.ip, self.port), dispatcher)
+         self.server = osc_server.ThreadingOSCUDPServer((self.ip, self.port), self.dispatcher)
   
          print("Generic OSC recorder serving on {}".format(self.server.server_address))
 
