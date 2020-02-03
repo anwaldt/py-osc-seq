@@ -73,7 +73,7 @@ class OscRecorder:
         
         n_arguments = len(oscArgs)
         
-        f       = open(self.outpath + fileString, 'a')
+        f       = open(self.outpath + "/" + fileString, 'a')
     
         
         
