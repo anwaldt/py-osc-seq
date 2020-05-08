@@ -304,9 +304,7 @@ class OscPlayerMain(QMainWindow):
         #_thread.start_new_thread( JackTime, () )
          
        
-        t = threading.Thread(target=self.JackClocker)
-             
-        t.start()
+s
 
 
 ###############################################################################################
