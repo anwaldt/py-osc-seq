@@ -73,9 +73,7 @@ class OscPlayerMain(QMainWindow):
 
         
     def initUI(self):  
-        
-        self.setWindowIcon(QIcon('graphics/TU-Berlin-Logo.svg'))
-        
+                
         # Optional, resize window to image size
      
         
