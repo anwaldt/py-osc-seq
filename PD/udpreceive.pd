@@ -1,8 +1,0 @@
-#N canvas 877 339 450 300 10;
-#X obj 186 72 udpreceive;
-#X obj 182 112 unpackOSC;
-#X obj 181 161 print;
-#X msg 182 19 port 50002;
-#X connect 0 0 1 0;
-#X connect 1 0 2 0;
-#X connect 3 0 0 0;
