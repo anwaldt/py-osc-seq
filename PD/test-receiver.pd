@@ -1,8 +1,8 @@
-#N canvas 427 671 450 300 10;
+#N canvas 1367 682 450 300 10;
 #X obj 199 201 unpackOSC;
 #X obj 199 224 print;
-#X msg 220 110 port 4008;
 #X obj 200 167 udpreceive;
+#X msg 220 110 port 7777;
 #X connect 0 0 1 0;
-#X connect 2 0 3 0;
-#X connect 3 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 2 0;

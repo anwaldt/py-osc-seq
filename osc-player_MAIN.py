@@ -73,7 +73,9 @@ class OscPlayerMain(QMainWindow):
 
         
     def initUI(self):  
-                
+        
+        self.setWindowIcon(QIcon('graphics/TU-Berlin-Logo.svg'))
+        
         # Optional, resize window to image size
      
         
@@ -302,7 +304,9 @@ class OscPlayerMain(QMainWindow):
         #_thread.start_new_thread( JackTime, () )
          
        
-
+        t = threading.Thread(target=self.JackClocker)
+             
+        t.start()
 
 
 ###############################################################################################
