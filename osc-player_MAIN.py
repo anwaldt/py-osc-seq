@@ -304,7 +304,7 @@ class OscPlayerMain(QMainWindow):
         #_thread.start_new_thread( JackTime, () )
          
        
-s
+
 
 
 ###############################################################################################
